@@ -1,0 +1,26 @@
+# ---- installed artifacts (install.ps1 recreates these) ----
+/ComfyUI-0.45.0/
+/venv/
+/python-base/
+/models/
+
+# ---- runtime output ----
+ComfyUI-0.45.0/output/
+ComfyUI-0.45.0/input/
+ComfyUI-0.45.0/user/
+ComfyUI-0.45.0/*.log
+slider/uploads/
+slider/*.log
+*.pyc
+__pycache__/
+
+# ---- editor / OS ----
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# ---- secrets ----
+.env
+*.token

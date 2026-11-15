@@ -1,0 +1,12 @@
+[
+  {
+    "name": "Illustrious-XL",
+    "presetPrompt": "best quality, masterpiece, highly detailed, sharp focus",
+    "file": "workflows/Illustrious-XL.json"
+  },
+  {
+    "name": "Illustrious-XL-Edit",
+    "presetPrompt": "best quality, masterpiece, highly detailed",
+    "file": "workflows/Illustrious-XL-Edit.json"
+  }
+]
