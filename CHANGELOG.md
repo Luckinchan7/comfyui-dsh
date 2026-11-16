@@ -16,6 +16,47 @@
 
 ---
 
+## [1.2.1] — 2026-11-17
+
+启动器重写：双击不再撞端口，服务起来自动开浏览器。
+
+### 修复
+
+- **`启动ComfyUI.bat` 在服务已运行时直接报 `Port 8188 is already in use`**。
+  这是窗口里唯一能看到的东西，用户会以为坏了。现在改成先探测 8188：在听就
+  `start` 打开浏览器并退出。
+- **启动后要手动复制地址**。新增 `open_when_ready.bat`，轮询端口直到服务应答再
+  开浏览器，不靠猜「等 25 秒够不够」。
+- **`start.bat` 里 `call "%~dp0启动ComfyUI.bat"` 报
+  `is not recognized as an internal or external command`**。`.bat` 被 cmd 按 OEM
+  代码页解码，非 936 环境下中文文件名变成乱码路径。改成两份独立实现：中文名那份
+  给资源管理器双击，`start.bat` 是纯 ASCII 副本给终端和自动化用。
+- **`start.bat` 的注释还写着 `--fast cublas_ops fp16_accumulation` 和
+  「71-164s per 1024x1024」**，那是已经推翻的旧结论。改为 26–33 s @ 832×1216
+  并明确写「别加 --fast / --enable-triton-backend」。
+
+### 新增
+
+- **`docs/preview/three-modes.jpg`**：同 seed 同 prompt 下普通 / HiRes / Edit
+  三模式并排（832×1216 直出、1248×1824 二次采样、denoise 0.55 改图），标注分辨率
+  与实测耗时，用于说明三者的节点图差异。
+- **`open_when_ready.bat`**：等待 8188 应答后调用默认浏览器，最多等 4 分钟。
+
+### 关于三模式的实测数据
+
+同 seed 5150、同 prompt、Juggernaut-XI-v11：
+
+| 模式 | 节点数 | 输出 | 耗时 |
+|---|---|---|---|
+| 普通 | 7 | 832×1216 | 24–30 s（热） |
+| HiRes | 11 | 1248×1824 | 58 s（热） |
+| Edit | 8 | = 输入图 | 38.5 s |
+
+普通与 HiRes 出来的构图、姿态、光位几乎完全一致 —— 第二段 denoise 只有 0.35，
+结构由第一段决定。所以 HiRes 不能用来试稿，只适合定稿后放大。
+
+---
+
 ## [1.2.0] — 2026-11-16
 
 README 从纯文字改成图文页。补上 banner、四张实测截图，中英文两版同时重排。
@@ -198,6 +239,7 @@ README 从纯文字改成图文页。补上 banner、四张实测截图，中英
 | v1.1.1 | 同上（纯文档） | 同上 | 同上 |
 
 [未发布]: https://github.com/devin667/comfyui-dsh/compare/v1.2.0...HEAD
+[1.2.1]: https://github.com/devin667/comfyui-dsh/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/devin667/comfyui-dsh/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/devin667/comfyui-dsh/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/devin667/comfyui-dsh/compare/v1.0.0...v1.1.0

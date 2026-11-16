@@ -1,7 +1,7 @@
 # comfyui-dsh — local image generation, ComfyUI + DeepSeek Harness
 
 [![DSH target](https://img.shields.io/badge/DeepSeek%20Harness-0.2.2--rc.3-4f46e5)](docs/COMPATIBILITY.md)
-[![version](https://img.shields.io/badge/version-1.2.0-16a34a)](https://github.com/devin667/comfyui-dsh/releases/tag/v1.2.0)
+[![version](https://img.shields.io/badge/version-1.2.1-16a34a)](https://github.com/devin667/comfyui-dsh/releases/tag/v1.2.1)
 [![checkpoints](https://img.shields.io/badge/checkpoints-4-0ea5e9)](docs/MODELS.md)
 [![workflows](https://img.shields.io/badge/workflows-10-8b5cf6)](dsh/workflows)
 [![license](https://img.shields.io/badge/license-MIT-a3a3a3)](LICENSE)
@@ -279,6 +279,17 @@ python D:\ComfyUI\serve_comfy.py      # silent, detached from the session
 that job walks the whole process tree. For interactive use, double-click
 `启动ComfyUI.bat` (it has a console window showing progress).
 
+It does three things: check whether something already listens on 8188 -> if yes,
+just `start` the browser and exit (no more `Port 8188 is already in use`) -> if no,
+launch the server and spawn `open_when_ready.bat` in the background, which polls the
+port and opens the browser the moment the server answers.
+
+`start.bat` is the same logic duplicated with pure ASCII. Two copies are needed
+because a `.bat` that mentions a Chinese filename resolves it to a garbage path
+under a non-936 console codepage and dies with
+`is not recognized as an internal or external command`. The Chinese-named one is
+for double-clicking in Explorer; the ASCII one is for terminals and automation.
+
 ---
 
 ## Layout
@@ -312,7 +323,9 @@ docs/
   PERFORMANCE.md          launch flag tuning and VRAM contention
   COMPATIBILITY.md        GPU / driver / OS / version matrix
   preview/                screenshots used in the README
-启动ComfyUI.bat           start ComfyUI (warns if already running)
+启动ComfyUI.bat           start ComfyUI (opens the browser if already running)
+start.bat                 ASCII-only launcher, same behaviour (use when non-ASCII paths break)
+open_when_ready.bat       polls 8188 and opens the browser once the server answers
 启动Denoise滑杆.bat       start the slider page
 install.ps1               one-click installer
 CHANGELOG.md              changelog
@@ -325,7 +338,7 @@ README.en.md              this file
 
 **Q: `Could not connect to ComfyUI at http://127.0.0.1:8188`**
 ComfyUI is not running. `dsh-image-gen` has no provider fallback — it throws immediately.
-Double-click `启动ComfyUI.bat`.
+Double-click `启动ComfyUI.bat` (when it is already up, it just opens the browser).
 
 **Q: `You need pytorch with cu130 or higher`**
 ```powershell
@@ -371,7 +384,8 @@ part's byte count, and the file magic number.
 | v1.0.0 (2026-11-15) | Illustrious-XL (anime) | `--cache-none` | 11 GB |
 | v1.1.0 (2026-11-16) | + RealVisXL V5 / Juggernaut XI / FLUX Krea | `--cache-lru 8 --reserve-vram 0.3` | 15–33 GB |
 | v1.1.1 (2026-11-16) | same (docs only: English README, changelog, compatibility) | same | same |
-| **v1.2.0 (2026-11-16)** | same (README overhaul: banner + four screenshots) | same | same |
+| v1.2.0 (2026-11-16) | same (README overhaul: banner + four screenshots) | same | same |
+| **v1.2.1 (2026-11-17)** | same (launcher rewrite: open browser when running, auto-open when ready, ASCII fallback) | same | same |
 
 Per-change details in **[CHANGELOG.md](CHANGELOG.md)**.
 
