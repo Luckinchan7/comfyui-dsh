@@ -117,6 +117,9 @@
       <h2>ComfyUI</h2>
       <div class="status"><i class="dot" id="dot"></i><span id="statusText">检测中…</span></div>
 
+      <label class="f" style="margin-top:10px">底模</label>
+      <select id="ckpt"><option value="">检测中…</option></select>
+
       <div class="card" style="background:#0e1219;border-radius:10px;padding:12px;margin-bottom:4px">
         <h2 style="margin-bottom:8px">Denoise 强度</h2>
         <div class="denoise-box">
@@ -143,20 +146,20 @@
         <b>提示词用英文效果明显更好。</b>SDXL 的文本编码器是按英文标签训练的，中文写进去基本等于噪声 —— 同一张图、同一个 seed、同样 denoise，英文能改到位，中文常常纹丝不动。
       </div>
       <label class="f">正向提示词（英文标签式最准）</label>
-      <textarea id="prompt" spellcheck="false" style="min-height:88px">best quality, masterpiece, amazing quality, very aesthetic, absurdres, 1girl, solo, detailed face, beautiful detailed eyes, silver hair, long hair, looking at viewer</textarea>
+      <textarea id="prompt" spellcheck="false" style="min-height:88px">RAW photo, amateur snapshot taken on iPhone, a young woman with fair clean skin, smooth flawless complexion, soft natural window light, 85mm f/1.8, shallow depth of field, photorealistic, sharp eyes, natural relaxed expression</textarea>
       <div class="chips">
-        <button type="button" class="chip" data-tag="best quality, masterpiece, amazing quality, very aesthetic, absurdres">质量词</button>
-        <button type="button" class="chip" data-tag="detailed face, beautiful detailed eyes, sharp focus">精细脸</button>
-        <button type="button" class="chip" data-tag="1girl, solo">单人</button>
-        <button type="button" class="chip" data-tag="silver hair, long hair, blue eyes">银发蓝眼</button>
-        <button type="button" class="chip" data-tag="same pose, same art style, same girl, identical face">锁身份</button>
+        <button type="button" class="chip" data-tag="RAW photo, amateur snapshot taken on iPhone, unedited, natural lighting, grain">随手拍</button>
+        <button type="button" class="chip" data-tag="professional studio portrait photograph, soft beauty dish lighting, subtle rim light, 85mm f/1.8, shallow depth of field">影棚光</button>
+        <button type="button" class="chip" data-tag="fair clean skin, flawless smooth complexion, clear even skin tone, no freckles, no blemishes">白净皮肤</button>
+        <button type="button" class="chip" data-tag="same pose, same expression, identical face, identical hair, same person">锁身份</button>
+        <button type="button" class="chip" data-tag="anime illustration, cel shading, thick outlines, 1girl, solo">动漫风（配 Illustrious）</button>
         <button type="button" class="chip" data-tag="full body, standing, from side">全身侧身</button>
       </div>
       <label class="f">负向提示词</label>
       <textarea id="negative" spellcheck="false" style="min-height:52px"></textarea>
       <div class="row">
-        <div><label class="f">步数</label><input type="number" id="steps" value="24" min="1" max="80"></div>
-        <div><label class="f">CFG</label><input type="number" id="cfg" value="6.5" min="0.5" max="20" step="0.5"></div>
+        <div><label class="f">步数</label><input type="number" id="steps" value="30" min="1" max="80"></div>
+        <div><label class="f">CFG</label><input type="number" id="cfg" value="5" min="0.5" max="20" step="0.5"></div>
       </div>
       <div class="row">
         <div><label class="f">采样器</label><select id="sampler"></select></div>
@@ -237,7 +240,14 @@ function syncDenoise() {
 }
 $("dn").addEventListener("input", syncDenoise);
 
-$("negative").value = "lowres, bad anatomy, bad hands, extra digits, fewer digits, missing fingers, watermark, text, signature, username, jpeg artifacts, worst quality, low quality, normal quality, monochrome, grayscale";
+const NEG_ANIME = "lowres, bad anatomy, bad hands, extra digits, fewer digits, missing fingers, watermark, text, signature, username, jpeg artifacts, worst quality, low quality, normal quality, monochrome, grayscale";
+const NEG_PHOTO = "freckles, moles, birthmark, beauty mark, blemishes, skin spots, dark spots, age spots, sun spots, liver spots, acne, pimples, acne scars, blackheads, rosacea, redness on cheeks, blotchy skin, uneven skin tone, patchy skin, textured skin, rough skin, oily skin, greasy skin, shiny forehead, large pores, visible pores, wrinkles, skin imperfection, dirty skin, tan skin, dark skin, sunburned skin, cartoon, anime, illustration, painting, drawing, sketch, 3d render, cgi, octane render, unreal engine, plastic skin, airbrushed, waxy, doll, mannequin, oversmooth, oversaturated, deformed, bad anatomy, bad hands, extra fingers, blurry, lowres, jpeg artifacts, watermark, text, signature, logo";
+
+function negFor(ckpt) {
+  return /illustrious|anime|noob|pony/i.test(ckpt || "") ? NEG_ANIME : NEG_PHOTO;
+}
+
+$("negative").value = NEG_PHOTO;
 
 /* ---------- 健康检查 ---------- */
 async function health() {
@@ -250,6 +260,7 @@ async function health() {
       const freeGb = (d.vramFree / 1073741824).toFixed(1);
       const totGb = (d.vramTotal / 1073741824).toFixed(1);
       $("statusText").textContent = `ComfyUI ${d.version} · 显存 ${freeGb}/${totGb} GB · 队列 ${d.queue.running}/${d.queue.pending}`;
+      fillCheckpoints(d.checkpoints);
       fillOptions();
       return true;
     }
@@ -264,6 +275,31 @@ async function health() {
 }
 
 let optionsLoaded = false;
+let ckptLoaded = false;
+
+function fillCheckpoints(list) {
+  if (ckptLoaded || !Array.isArray(list) || !list.length) return;
+  const sel = $("ckpt");
+  const saved = localStorage.getItem("slider.ckpt") || "";
+  sel.innerHTML = "";
+  list.forEach((x) => {
+    const o = document.createElement("option");
+    o.value = x;
+    o.textContent = x.replace(/\.safetensors$|\.ckpt$|\.gguf$/i, "");
+    sel.appendChild(o);
+  });
+  const pick = list.includes(saved) ? saved
+    : list.find((x) => /RealVisXL_V5\.0/i.test(x)) || list[0];
+  sel.value = pick;
+  ckptLoaded = true;
+}
+
+$("ckpt").addEventListener("change", () => {
+  const c = $("ckpt").value;
+  localStorage.setItem("slider.ckpt", c);
+  $("negative").value = negFor(c);
+  logLine(`底模换成 ${c}（下一次生成生效，负向已按底模切换）`);
+});
 
 async function fillOptions() {
   if (optionsLoaded) return;
@@ -366,6 +402,7 @@ $("go").addEventListener("click", async () => {
   const [w, h] = $("size").value.split("x").map(Number);
   const payload = {
     mode: state.mode,
+    ckpt: $("ckpt").value || "",
     prompt: $("prompt").value,
     negative: $("negative").value,
     denoise: Number($("dn").value),

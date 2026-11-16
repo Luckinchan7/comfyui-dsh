@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="200" viewBox="0 0 900 200" role="img" aria-label="comfyui-dsh">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0b1220"/>
+      <stop offset="52%" stop-color="#111a2e"/>
+      <stop offset="100%" stop-color="#1b2b4a"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#22d3ee"/>
+      <stop offset="50%" stop-color="#60a5fa"/>
+      <stop offset="100%" stop-color="#a78bfa"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.16"/>
+      <stop offset="100%" stop-color="#a78bfa" stop-opacity="0.02"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="900" height="200" fill="url(#bg)"/>
+  <rect x="0" y="0" width="900" height="200" fill="url(#glow)"/>
+
+  <!-- faint frame lines -->
+  <g stroke="#3b82f6" stroke-opacity="0.14" stroke-width="1">
+    <line x1="0" y1="52" x2="900" y2="52"/>
+    <line x1="0" y1="148" x2="900" y2="148"/>
+  </g>
+
+  <text x="450" y="96" font-family="'Segoe UI', system-ui, -apple-system, sans-serif"
+        font-size="52" font-weight="700" fill="#f8fafc" text-anchor="middle"
+        letter-spacing="-1">comfyui-dsh</text>
+
+  <text x="450" y="130" font-family="'Segoe UI', system-ui, sans-serif"
+        font-size="18" fill="#9fb3d8" text-anchor="middle">本地生图 · ComfyUI + DeepSeek Harness</text>
+
+  <text x="450" y="166" font-family="'Segoe UI', system-ui, sans-serif"
+        font-size="13" fill="#64748b" text-anchor="middle" letter-spacing="0.6">4 checkpoints · 10 workflows · denoise slider · no cloud</text>
+
+  <rect x="0" y="196" width="900" height="4" fill="url(#accent)"/>
+</svg>

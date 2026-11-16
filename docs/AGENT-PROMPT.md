@@ -1,5 +1,7 @@
 # 给别人用的安装 Prompt
 
+**返回** [README](../README.md) · [English](../README.en.md) · [变更日志](../CHANGELOG.md)
+
 把下面整段复制给你的 DSH（或任何能跑命令的 AI agent），它会自己装完。
 
 前提：Windows 10/11、NVIDIA 显卡显存 ≥ 8 GB、16 GB 内存、目标盘 ≥ 12 GB 空闲。

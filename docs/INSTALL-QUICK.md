@@ -1,5 +1,7 @@
 # 三步装完（Windows）
 
+**返回** [README](../README.md) · [English](../README.en.md) · [变更日志](../CHANGELOG.md)
+
 ## 前提
 
 | 项 | 要求 |

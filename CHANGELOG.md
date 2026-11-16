@@ -16,6 +16,39 @@
 
 ---
 
+## [1.2.0] — 2026-11-16
+
+README 从纯文字改成图文页。补上 banner、四张实测截图，中英文两版同时重排。
+
+### 新增
+
+- **`docs/banner.svg`**：手写 SVG，900×200，深色渐变 + 三色底线。不依赖外部图片，
+  GitHub 直接渲染。
+- **`docs/preview/checkpoints-4way.jpg`**：四个底模同一 prompt、同一场景的 2×2 对比。
+  Illustrious 那张是新跑的 —— 用写实 prompt 强扭动漫底模，出来的仍是插画。
+- **`docs/preview/text-rendering.jpg`**：`KRA COFFEE` / `KREA. COFFEE` / `KIRE A`
+  三方拼图，直接展示图内文字有多不可靠。
+- **`docs/preview/clean-skin.jpg`**：白净皮肤定版样图（1248×1824，44 s）。
+- **`docs/preview/slider.jpg`**：Denoise 滑杆页实际截图。
+- 中文版加「四个底模，一张图看清差别」「白净皮肤」「图内文字，别指望」三节。
+- 英文版加对应的 "Four checkpoints", "Clean skin", "In-image text" 三节。
+- 两版顶部统一加六个徽章：DSH 目标版本、当前版本、底模数、工作流数、许可、平台。
+
+### 变更
+
+- **`README.md` 重排**：底模对比表移到最前面，速度表紧随，安装与接线后置。
+  原先开头是三段散文，读者要滚过一屏才知道能干什么。
+- **`README.en.md` 重写**：与中文版逐节对应，不再是早期的简版。
+- 预览图全部转 JPEG（q88，宽 ≤ 1400），四张合计 968 KB —— 原 PNG 版 11 MB。
+
+### 备注
+
+- 截图里没有版本号水印，避免下一次改版本时图又过期。
+- 四底模对比图里的 Illustrious 那张用的是写实 prompt，是刻意的反例：
+  告诉读者「拿动漫底模写 `RAW photo` 不会变成照片」。
+
+---
+
 ## [1.1.1] — 2026-11-16
 
 纯文档版本，没有代码变更。补上 README 该有的三样东西：英文说明、变更日志、
@@ -164,7 +197,8 @@
 | v1.1.0 | + RealVisXL V5 / Juggernaut XI / FLUX Krea | `--cache-lru 8 --reserve-vram 0.3` | 15–33 GB |
 | v1.1.1 | 同上（纯文档） | 同上 | 同上 |
 
-[未发布]: https://github.com/devin667/comfyui-dsh/compare/v1.1.1...HEAD
+[未发布]: https://github.com/devin667/comfyui-dsh/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/devin667/comfyui-dsh/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/devin667/comfyui-dsh/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/devin667/comfyui-dsh/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/devin667/comfyui-dsh/releases/tag/v1.0.0

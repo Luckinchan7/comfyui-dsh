@@ -13,13 +13,30 @@ const COMFY_INPUT = path.join(COMFY_ROOT, "input");
 const UPLOAD_DIR = path.join(HERE, "uploads");
 const COMFY_API = (process.env.COMFY_API || "http://127.0.0.1:8188").replace(/\/+$/, "");
 const PORT = Number(process.env.PORT || 8189);
-const CKPT = process.env.CKPT || "Illustrious-XL-v1.1.safetensors";
+const CKPT = process.env.CKPT || "RealVisXL_V5.0_fp16.safetensors";
 const HOST = "127.0.0.1";
 
-const NEG_DEFAULT =
+const NEG_ANIME =
   "lowres, bad anatomy, bad hands, extra digits, fewer digits, missing fingers, " +
   "watermark, text, signature, username, jpeg artifacts, worst quality, low quality, " +
   "normal quality, monochrome, grayscale";
+
+const NEG_PHOTO =
+  "freckles, moles, birthmark, beauty mark, blemishes, skin spots, dark spots, " +
+  "age spots, sun spots, liver spots, acne, pimples, acne scars, blackheads, rosacea, " +
+  "redness on cheeks, blotchy skin, uneven skin tone, patchy skin, textured skin, " +
+  "rough skin, oily skin, greasy skin, shiny forehead, large pores, visible pores, " +
+  "wrinkles, skin imperfection, dirty skin, tan skin, dark skin, sunburned skin, " +
+  "cartoon, anime, illustration, painting, drawing, sketch, 3d render, cgi, " +
+  "octane render, unreal engine, plastic skin, airbrushed, waxy, doll, mannequin, " +
+  "oversmooth, oversaturated, deformed, bad anatomy, bad hands, extra fingers, " +
+  "blurry, lowres, jpeg artifacts, watermark, text, signature, logo";
+
+const NEG_DEFAULT = NEG_PHOTO;
+
+function negForCkpt(ckpt) {
+  return /illustrious|anime|noob|pony/i.test(ckpt || "") ? NEG_ANIME : NEG_PHOTO;
+}
 
 await fsp.mkdir(UPLOAD_DIR, { recursive: true });
 await fsp.mkdir(COMFY_INPUT, { recursive: true });
@@ -196,10 +213,10 @@ const ROUTES = {
       mode,
       ckpt: p.ckpt || CKPT,
       prompt: String(p.prompt || "").trim() || "best quality, masterpiece, highly detailed",
-      negative: String(p.negative ?? NEG_DEFAULT),
+      negative: String(p.negative ?? negForCkpt(p.ckpt)),
       denoise: clampNum(p.denoise, 0.01, 1, mode === "create" ? 1 : 0.55),
-      steps: Math.round(clampNum(p.steps, 1, 80, 24)),
-      cfg: clampNum(p.cfg, 0.5, 20, 6.5),
+      steps: Math.round(clampNum(p.steps, 1, 80, 30)),
+      cfg: clampNum(p.cfg, 0.5, 20, 5),
       sampler: p.sampler || "dpmpp_2m",
       scheduler: p.scheduler || "karras",
       seed:

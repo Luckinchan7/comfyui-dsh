@@ -1,5 +1,7 @@
 # 为什么要本地跑
 
+**返回** [README](../README.md) · [English](../README.en.md) · [变更日志](../CHANGELOG.md)
+
 ## 云端的两道关
 
 云端生图服务（DashScope / OpenAI / Seedream）在服务端做内容审核。实际会撞到两种拒绝：

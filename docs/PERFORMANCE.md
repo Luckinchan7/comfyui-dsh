@@ -1,6 +1,8 @@
 # 性能调优实录（RTX 5060 Laptop 8 GB）
 
-这份文档记录把 SDXL 单图从 **328 秒压到 20 秒**的完整过程，包括几次走错的弯路。
+**返回** [README](../README.md) · [English](../README.en.md) · [变更日志](../CHANGELOG.md)
+
+这份文档记录把 SDXL 单图从 **328 秒压到 26–33 秒**的完整过程，包括几次走错的弯路。
 结论在最后，赶时间可以跳过去直接看。
 
 所有数字：`832×1216`，RealVisXL V5 或 Illustrious-XL，30 步 / cfg 5 / dpmpp_2m karras，
