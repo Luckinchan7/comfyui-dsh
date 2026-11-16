@@ -1,5 +1,7 @@
 # ComfyUI + DSH 本地生图（Windows / RTX 50 系显卡）
 
+中文 · [English](README.en.md) · [变更日志](CHANGELOG.md) · [适配说明](docs/COMPATIBILITY.md)
+
 一套能落地的本地生图方案：**ComfyUI 独立进程**跑在本机 8188 端口，**DSH 插件**
 `dsh-image-gen` 通过 HTTP 调用它。生图链路全程在本机完成，能有效避开云端审核，
 不消耗生图 token，产出直接落在自己硬盘上。
@@ -91,7 +93,7 @@ cd D:\ComfyUI
 powershell -ExecutionPolicy Bypass -File .\install.ps1
 ```
 
-两者内容一致。`install.ps1` 分 8 步、全程幂等，中断了直接重跑：
+两者内容一致。`install.ps1` 分 9 步、全程幂等，中断了直接重跑：
 
 1. 下载 Python 3.12 便携版 → `python-base\`（不动系统 Python）
 2. 建 venv，`pyvenv.cfg` 重指当前目录（整个文件夹可搬移）
@@ -138,16 +140,80 @@ NVIDIA Overlay 能吃掉 2 GB。这一点比任何启动参数都重要，见下
 
 ---
 
+## 适配说明
+
+完整矩阵（各档显存、CUDA 版本、操作系统、Python 与 ComfyUI 版本、DSH 版本、
+端口冲突）见 **[docs/COMPATIBILITY.md](docs/COMPATIBILITY.md)**。这里只放最常被问到的。
+
+### 显卡与显存
+
+| 显存 | SDXL | FLUX Krea | 建议 |
+|---|---|---|---|
+| 4 GB | ⚠️ 1024×1024 会 OOM | ❌ | 降到 512×768，很痛苦 |
+| 6 GB | ✅ 768×1024 稳 | ❌ | 关浏览器再跑 |
+| **8 GB（实测）** | ✅ **832×1216，26–33 s** | ⚠️ 仅 Q2_K，82 s，皮肤有伪影 | 本仓库的目标配置 |
+| 12 GB | ✅ 1024×1024 无压力 | ⚠️ Q4_K_S 能完整加载 | FLUX 从这里起步 |
+| 16 GB | ✅ 1440×1440 | ✅ Q6_K / Q8_0 | 甜点区 |
+| 24 GB | ✅ 原生 2048 | ✅ 全精度 fp16 | 不需要量化 |
+
+### 驱动与 CUDA
+
+| 组合 | 状态 |
+|---|---|
+| RTX 50 系（sm_120）+ cu130 | ✅ 必须，本仓库默认 |
+| RTX 40 系（sm_89）+ cu126 / cu130 | ✅ 改 `$TorchWhl` 即可 |
+| RTX 30 系（sm_86）+ cu121 / cu126 | ✅ 同上 |
+| RTX 20 系（sm_75）+ cu121 | ✅ 同上，约慢一半 |
+| GTX 16 系 / 10 系 | ⚠️ 无 Tensor Core，慢 3–5 倍 |
+| 纯 CPU | ❌ 一张图 20 分钟以上 |
+| AMD / Intel | ❌ 只装了 CUDA 版 torch |
+
+驱动要求 **≥ 570**（cu130）。本机 617.42。
+
+### 系统
+
+| 系统 | 状态 |
+|---|---|
+| Windows 11 x64（实测 build 26100） | ✅ 唯一实测平台 |
+| Windows 10 x64 21H2+ | ✅ 脚本只用了自带的 `tar.exe` / `Expand-Archive` |
+| Linux | ⚠️ ComfyUI 本体没问题，`install.ps1` 与两个 `.bat` 要重写 |
+| macOS | ⚠️ 只能 MPS，一张图 2–5 分钟，未适配 |
+| Windows 7 / 8 | ❌ 缺 `tar.exe` |
+
+**路径不要有空格和中文。**
+
+### 版本
+
+| 组件 | 版本 |
+|---|---|
+| Python | 3.12.13 |
+| torch / torchvision | 2.9.0+cu130 / 0.24.0+cu130 |
+| ComfyUI | 0.45.0 |
+| DSH | 0.2.2-rc.3 |
+| `dsh-image-gen` | 0.11.3 |
+| `dsh-comfy-models` | 0.1.0（本仓库） |
+
+### 不适配就不适配
+
+以下都是物理限制，调参数解决不了：4 GB 跑 SDXL 1024×1024、8 GB 跑 FLUX 全精度、
+纯 CPU 跑 SDXL、图内文字（两个架构都不稳）、多人场景（未测且普遍容易糊）。
+想要更好的，路径是换硬件到 16 GB 显存起步。
+
+---
+
 ## 出图速度（RTX 5060 Laptop 8 GB 实测）
 
 条件：`832×1216`，SDXL 30 步 / cfg 5 / dpmpp_2m karras。
 
 | 底模 | 热态单图 | 首图（含加载） | HiRes 1.5×（1248×1824） |
 |---|---|---|---|
-| Illustrious-XL | 24 s | 150 s | 62 s |
-| **RealVisXL V5** | **20 s** | 150 s | **58 s** |
-| Juggernaut XI v11 | 24 s | 150 s | 58 s |
+| Illustrious-XL | 26–33 s | 150 s | 62 s |
+| **RealVisXL V5** | **26–31 s** | 150 s | **58 s** |
+| Juggernaut XI v11 | 24–30 s | 150 s | 58 s |
 | FLUX Krea Q2_K（24 步） | 82 s | 240 s | — |
+
+单图耗时的浮动来自显存占用，不是参数：浏览器 + 微信吃掉 2 GB 时会掉到 140 秒级别，
+见下面「启动参数」的最后一节。
 
 ### 启动参数
 
@@ -318,9 +384,12 @@ docs/
   why-local.md            为什么本地跑 / 代价对比
   MODELS.md               四个底模横向实测
   PERFORMANCE.md          启动参数调优与显存争用
+  COMPATIBILITY.md        显卡/驱动/系统/版本适配矩阵
 启动ComfyUI.bat           启动 ComfyUI（已在跑就提示）
 启动Denoise滑杆.bat       启动滑杆页（已在跑就打开浏览器）
 install.ps1               一键安装
+CHANGELOG.md              版本变更日志
+README.en.md              英文说明
 ```
 
 ---
@@ -365,6 +434,17 @@ torch 版本不对。RTX 50 系（Blackwell / sm_120）必须 cu130：
 **Q: 下载的模型文件大小对但加载报 `GGUF magic invalid`**
 hf-mirror 在被限流时会把报错页当正文写进文件，大小完全吻合。用 `scripts/fetch_parts.sh`
 下载，它校验 HTTP 206 状态 + 每段字节数 + 文件魔数。
+
+---
+
+## 版本
+
+| 版本 | 底模 | 启动参数 | 磁盘 |
+|---|---|---|---|
+| v1.0.0（2026-11-15） | Illustrious-XL（动漫） | `--cache-none` | 11 GB |
+| **v1.1.0（2026-11-16）** | + RealVisXL V5 / Juggernaut XI / FLUX Krea | `--cache-lru 8 --reserve-vram 0.3` | 15–33 GB |
+
+逐条变更见 **[CHANGELOG.md](CHANGELOG.md)**。
 
 ---
 

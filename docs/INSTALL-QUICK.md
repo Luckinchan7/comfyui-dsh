@@ -29,7 +29,7 @@ cd D:\ComfyUI
 powershell -ExecutionPolicy Bypass -File .\install.ps1
 ```
 
-脚本会依次做 7 件事，全程有进度输出：
+脚本会依次做 9 件事，全程有进度输出：
 
 ```
 [1] Python 3.12 runtime (standalone copy, system Python untouched)
@@ -38,10 +38,30 @@ powershell -ExecutionPolicy Bypass -File .\install.ps1
 [4] ComfyUI source v0.45.0
 [5] ComfyUI Python dependencies
 [6] SDXL checkpoint - Illustrious-XL v1.1 (6.46 GB)
-[7] smoke test
+[7] photoreal SDXL checkpoints      <- 可选
+[8] FLUX.1 Krea dev                 <- 可选
+[9] smoke test
 ```
 
 大概 15–40 分钟，取决于网速。**中断了直接重跑就行**，每一步都是幂等的，已下好的会跳过。
+
+### 要不要装写实底模
+
+默认只装动漫底模 Illustrious-XL。要真人照片就加开关：
+
+```powershell
+# 写实默认档 RealVisXL V5（+6.5 GB，推荐加上）
+powershell -ExecutionPolicy Bypass -File .\install.ps1 -WithRealistic
+
+# 再加 Juggernaut XI，商业/电影感，手部更稳（+6.6 GB）
+powershell -ExecutionPolicy Bypass -File .\install.ps1 -WithRealistic -WithJuggernaut
+
+# 再加 FLUX Krea（+9.1 GB，8 GB 卡上慢 3-4 倍，皮肤有量化伪影）
+powershell -ExecutionPolicy Bypass -File .\install.ps1 -WithRealistic -WithFlux
+```
+
+第 7、8 步没请求就打印一行 skip，不会阻断后面的步骤。选哪个底模见
+[MODELS.md](MODELS.md)，显存够不够见 [COMPATIBILITY.md](COMPATIBILITY.md)。
 
 跑完看到这个就算成功：
 
@@ -53,7 +73,7 @@ powershell -ExecutionPolicy Bypass -File .\install.ps1
     2. double-click the "start slider" .bat     -> 127.0.0.1:8189
     3. node .\dsh\apply-workflows.mjs      wires the workflows into DSH
 
-  Disk used: 10.8 GB
+  Disk used: 15.0 GB
 ```
 
 ## 第三步：接到 DSH
