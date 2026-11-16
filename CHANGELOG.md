@@ -16,6 +16,29 @@
 
 ---
 
+## [1.2.2] — 2026-11-17
+
+启动器默认不再弹浏览器。上一版把「服务已在运行 → 直接开浏览器」做成了无条件行为，
+后台常驻时窗口会无缘无故弹出来。
+
+### 变更
+
+- **`启动ComfyUI.bat` 默认只起服务，不开浏览器。** 要看界面自己在浏览器里开
+  `http://127.0.0.1:8188`。收藏一次即可，不必每次等它弹。
+- **新增 `-open` / `--open` 开关**：显式要求「服务就绪后自动开浏览器」。行为与
+  1.2.1 相同，只是从默认改成按需。
+- **新增 `--no-browser`**：显式表达默认行为，方便脚本里写清楚意图。
+- 服务已在运行时，默认只打印 `ComfyUI is already running.` + URL 然后退出；
+  带 `-open` 才额外开浏览器。
+
+### 关于参数的实现细节
+
+cmd 的 `if /i "%%~a"=="-open=0"` 这种带等号的字面量比较会被错误切分 —— 实测
+`-open=0` 会命中 `-open=1` 那一行，结果「显式关掉浏览器」反而打开了浏览器。
+所以开关只保留不带等号的形式：`-open` / `--open` / `--no-browser`。
+
+---
+
 ## [1.2.1] — 2026-11-17
 
 启动器重写：双击不再撞端口，服务起来自动开浏览器。
@@ -239,6 +262,7 @@ README 从纯文字改成图文页。补上 banner、四张实测截图，中英
 | v1.1.1 | 同上（纯文档） | 同上 | 同上 |
 
 [未发布]: https://github.com/devin667/comfyui-dsh/compare/v1.2.0...HEAD
+[1.2.2]: https://github.com/devin667/comfyui-dsh/compare/v1.2.1...v1.2.2
 [1.2.1]: https://github.com/devin667/comfyui-dsh/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/devin667/comfyui-dsh/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/devin667/comfyui-dsh/compare/v1.1.0...v1.1.1

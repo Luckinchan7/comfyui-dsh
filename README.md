@@ -1,7 +1,7 @@
 # comfyui-dsh — 本地生图，ComfyUI + DeepSeek Harness
 
 [![DSH target](https://img.shields.io/badge/DeepSeek%20Harness-0.2.2--rc.3-4f46e5)](docs/COMPATIBILITY.md)
-[![version](https://img.shields.io/badge/version-1.2.1-16a34a)](https://github.com/devin667/comfyui-dsh/releases/tag/v1.2.1)
+[![version](https://img.shields.io/badge/version-1.2.2-16a34a)](https://github.com/devin667/comfyui-dsh/releases/tag/v1.2.2)
 [![checkpoints](https://img.shields.io/badge/checkpoints-4-0ea5e9)](docs/MODELS.md)
 [![workflows](https://img.shields.io/badge/workflows-10-8b5cf6)](dsh/workflows)
 [![license](https://img.shields.io/badge/license-MIT-a3a3a3)](LICENSE)
@@ -244,9 +244,19 @@ python D:\ComfyUI\serve_comfy.py      # 静默，脱会话
 `Start-Process` 不够 —— agent shell 跑在 Windows Job 里，杀掉 job 会带走整棵进程树。
 手动用还是双击 `启动ComfyUI.bat`（有控制台窗口能看进度）。
 
-它做三件事：查 8188 有没有在听 → 在听就直接 `start` 打开浏览器然后退出（不会再甩你一句
-`Port 8188 is already in use`）→ 没在听就拉起服务，并在后台挂一个 `open_when_ready.bat`
-轮询端口，服务一就绪自动开浏览器，不用自己复制地址。
+**默认只起服务，不开浏览器。** 双击之后控制台刷日志，你要看图就自己在浏览器里开
+`http://127.0.0.1:8188`（收藏一次，以后点收藏夹就行）。这样后台常驻也不会有窗口突然弹出来打断你。
+
+想要「起来就自动开」就带参数：
+
+```bat
+启动ComfyUI.bat -open        :: 或 --open，服务就绪后自动开浏览器
+启动ComfyUI.bat              :: 默认，只起服务
+启动ComfyUI.bat --no-browser :: 显式不出浏览器，跟默认一样
+```
+
+三种情况下都不会再出现 `Port 8188 is already in use`：探测到 8188 在听就只打印一行
+`ComfyUI is already running.` 然后退出（带 `-open` 时才额外开浏览器）。
 
 `start.bat` 是同一套逻辑的纯 ASCII 副本。之所以要两份：`.bat` 里写中文文件名在非 936
 代码页的控制台下会被解成乱码路径，`call "%~dp0启动ComfyUI.bat"` 直接报
@@ -285,9 +295,9 @@ docs/
   PERFORMANCE.md          启动参数调优与显存争用
   COMPATIBILITY.md        显卡/驱动/系统/版本适配矩阵
   preview/                README 用的截图
-启动ComfyUI.bat           启动 ComfyUI（已运行则直接开浏览器）
+启动ComfyUI.bat           启动 ComfyUI（默认不开浏览器，-open 才开）
 start.bat                 ASCII 版启动器，功能同上，中文路径炸掉时的备胎
-open_when_ready.bat       轮询 8188，服务起来后自动开浏览器
+open_when_ready.bat       轮询 8188，服务起来后开浏览器（仅 -open 时被调用）
 启动Denoise滑杆.bat       启动滑杆页
 install.ps1               一键安装
 CHANGELOG.md              变更日志
@@ -297,7 +307,7 @@ README.en.md              英文说明
 ### 常见问题
 
 **Q: 报 `Could not connect to ComfyUI at http://127.0.0.1:8188`**
-ComfyUI 没启动。`dsh-image-gen` 没有 provider 回退逻辑，连不上就直接抛错。双击 `启动ComfyUI.bat`（已运行时它只负责开浏览器）。
+ComfyUI 没启动。`dsh-image-gen` 没有 provider 回退逻辑，连不上就直接抛错。双击 `启动ComfyUI.bat`。
 
 **Q: 报 `You need pytorch with cu130 or higher`**
 ```powershell
@@ -338,7 +348,8 @@ hf-mirror 被限流时会把报错页当正文写进文件，大小完全吻合�
 | v1.1.0（2026-11-16） | + RealVisXL V5 / Juggernaut XI / FLUX Krea | `--cache-lru 8 --reserve-vram 0.3` | 15–33 GB |
 | v1.1.1（2026-11-16） | 同上（纯文档：英文说明、变更日志、适配矩阵） | 同上 | 同上 |
 | v1.2.0（2026-11-16） | 同上（README 图文改版：banner + 四张实测截图） | 同上 | 同上 |
-| **v1.2.1（2026-11-17）** | 同上（启动器重写：已运行则开浏览器、就绪自动开页、ASCII 备胎） | 同上 | 同上 |
+| v1.2.1（2026-11-17） | 同上（启动器重写：不再撞端口、就绪自动开页、ASCII 备胎） | 同上 | 同上 |
+| **v1.2.2（2026-11-17）** | 同上（默认不开浏览器，`-open` 才开） | 同上 | 同上 |
 
 逐条变更见 **[CHANGELOG.md](CHANGELOG.md)**。
 
