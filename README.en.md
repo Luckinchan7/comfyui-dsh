@@ -315,6 +315,7 @@ scripts/
   fetch_parts.sh          resumable downloader (validates 206 + byte count + magic)
   bench_final.py          benchmark script
   pack-release.ps1        git archive packaging
+  make-release.py         create the GitHub release and upload zip + SHA256SUMS
 docs/
   INSTALL-QUICK.md        step-by-step install + troubleshooting
   AGENT-PROMPT.md         paste into an AI and let it install

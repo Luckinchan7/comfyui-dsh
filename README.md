@@ -276,6 +276,7 @@ scripts/
   fetch_parts.sh          断点续传下载器（校验 206 + 字节数 + 魔数）
   bench_final.py          测速脚本
   pack-release.ps1        git archive 打包发行版
+  make-release.py         建 GitHub release 并上传 zip + SHA256SUMS
 docs/
   INSTALL-QUICK.md        逐步骤安装 + 排错
   AGENT-PROMPT.md         复制给 AI 让它自己装
