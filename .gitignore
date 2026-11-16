@@ -27,3 +27,6 @@ desktop.ini
 
 # ---- node deps pulled only to run dsh/export-from-profile.mjs ----
 node_modules/
+
+# ---- release artifacts (scripts/pack-release.ps1) ----
+dist/
