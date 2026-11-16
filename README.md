@@ -442,7 +442,8 @@ hf-mirror 在被限流时会把报错页当正文写进文件，大小完全吻�
 | 版本 | 底模 | 启动参数 | 磁盘 |
 |---|---|---|---|
 | v1.0.0（2026-11-15） | Illustrious-XL（动漫） | `--cache-none` | 11 GB |
-| **v1.1.0（2026-11-16）** | + RealVisXL V5 / Juggernaut XI / FLUX Krea | `--cache-lru 8 --reserve-vram 0.3` | 15–33 GB |
+| v1.1.0（2026-11-16） | + RealVisXL V5 / Juggernaut XI / FLUX Krea | `--cache-lru 8 --reserve-vram 0.3` | 15–33 GB |
+| **v1.1.1（2026-11-16）** | 同上（纯文档：英文说明、变更日志、适配矩阵） | 同上 | 同上 |
 
 逐条变更见 **[CHANGELOG.md](CHANGELOG.md)**。
 

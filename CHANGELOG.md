@@ -16,6 +16,37 @@
 
 ---
 
+## [1.1.1] — 2026-11-16
+
+纯文档版本，没有代码变更。补上 README 该有的三样东西：英文说明、变更日志、
+适配矩阵。
+
+### 新增
+
+- **`README.en.md`**：全文英文，结构与中文版对齐。项目对外是「在 Windows 上把
+  生图搬到本机」的方案，英文说明是入口的一部分。
+- **`CHANGELOG.md`**：本文件。Keep a Changelog 格式，含已知问题清单。
+- **`docs/COMPATIBILITY.md`**：适配矩阵。
+  - 显卡档位：4 / 6 / 8 / 12 / 16 / 24 GB 各自能跑什么
+  - CUDA 版本：cu130 / cu126 / cu121 对应哪代卡，`install.ps1` 里改哪三行
+  - 操作系统：Windows 10/11、Linux、macOS、WSL2 的状态
+  - 版本对照：Python / torch / ComfyUI / DSH / `dsh-image-gen`
+  - 端口冲突、路径要求
+  - 「不适配就不适配」清单：物理限制，调参数解决不了
+
+### 变更
+
+- **`README.md` 顶部加导航**：中文 · English · 变更日志 · 适配说明。
+- **`README.md` 新增「适配说明」节**：显存、CUDA、系统、版本四张摘要表，
+  详细内容指向 `docs/COMPATIBILITY.md`。
+- **`README.md` 底部加版本对照表**：v1.0.0 与 v1.1.0 的底模、启动参数、磁盘差异。
+- **`README.md` 速度表修正**：Illustrious-XL 24→26–33 s、RealVisXL 20→26–31 s。
+  原先的 20 s 是显存恰好空闲时的偶然值，不是可复现基线。
+- **`docs/INSTALL-QUICK.md`**：步骤从 7 改成 9（补第 7 步写实底模、第 8 步 FLUX），
+  补三个开关的用法与体积代价，`Disk used` 从 10.8 GB 改为 15.0 GB。
+
+---
+
 ## [1.1.0] — 2026-11-16
 
 从"只有动漫底模"变成"四个底模可选"，速度调优走完全程，并补上底模切换插件。
@@ -131,7 +162,9 @@
 |---|---|---|---|
 | v1.0.0 | Illustrious-XL（动漫） | `--cache-none` | 11 GB |
 | v1.1.0 | + RealVisXL V5 / Juggernaut XI / FLUX Krea | `--cache-lru 8 --reserve-vram 0.3` | 15–33 GB |
+| v1.1.1 | 同上（纯文档） | 同上 | 同上 |
 
-[未发布]: https://github.com/devin667/comfyui-dsh/compare/v1.1.0...HEAD
+[未发布]: https://github.com/devin667/comfyui-dsh/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/devin667/comfyui-dsh/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/devin667/comfyui-dsh/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/devin667/comfyui-dsh/releases/tag/v1.0.0
