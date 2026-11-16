@@ -31,6 +31,13 @@
    这一步要 15–40 分钟（会下 Python 45 MB、torch 1.7 GB、模型 6.46 GB）。
    用后台任务跑，别让工具超时打断。脚本全程幂等，中断了直接重跑，已下好的会跳过。
 
+   默认只装动漫底模 Illustrious-XL。要真人写实输出，加参数：
+     -WithRealistic    +6.5 GB，RealVisXL V5（写实默认档）
+     -WithJuggernaut   +6.6 GB，Juggernaut XI（商业/电影感）
+     -WithFlux         +9.1 GB，FLUX Krea Q2_K + GGUF 节点（8 GB 卡能跑但慢 3-4 倍）
+
+   例：powershell -ExecutionPolicy Bypass -File .\install.ps1 -WithRealistic
+
 4. 判断安装成功的唯一标准，是最后打印出这段：
 
      Install complete.
@@ -40,9 +47,9 @@
        2. double-click the "start slider" .bat     -> 127.0.0.1:8189
        3. node .\dsh\apply-workflows.mjs      wires the workflows into DSH
 
-     Disk used: 10.8 GB
+     Disk used: 15.0 GB
 
-   以及第 7 步冒烟测试里 cuda 是 True、matmul 是 ok。
+   以及第 9 步冒烟测试里 cuda 是 True、matmul 是 ok。
    看到 "Install complete." 之前都不要认为装好了。
 
 5. 启动 ComfyUI 并确认它在监听：

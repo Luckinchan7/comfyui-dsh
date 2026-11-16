@@ -1,9 +1,23 @@
 # ComfyUI local installer for Windows (RTX 40/50 series friendly)
 #
 #   powershell -ExecutionPolicy Bypass -File .\install.ps1
+#   powershell -ExecutionPolicy Bypass -File .\install.ps1 -WithRealistic
+#   powershell -ExecutionPolicy Bypass -File .\install.ps1 -WithRealistic -WithJuggernaut -WithFlux
 #
 # Safe to re-run: every step checks its target first and skips when present,
 # so an interrupted install resumes instead of starting over.
+
+param(
+  # +6.5 GB. RealVisXL V5.0 fp16 - photoreal SDXL, the sane default for
+  # real-human output. Illustrious-XL stays installed for anime.
+  [switch]$WithRealistic,
+  # +6.6 GB. Juggernaut XI v11 - photoreal SDXL, commercial/filmic look,
+  # steadier hands. Optional second realistic checkpoint.
+  [switch]$WithJuggernaut,
+  # +9.1 GB. FLUX.1 Krea dev Q2_K + T5 + CLIP-L + VAE + ComfyUI-GGUF nodes.
+  # Runs on 8 GB but is 3-4x slower and adds quantization artifacts on skin.
+  [switch]$WithFlux
+)
 
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
@@ -20,6 +34,33 @@ $PyUrl    = 'https://registry.npmmirror.com/-/binary/python-build-standalone/202
 $ComfyUrl = 'https://gh-proxy.com/https://github.com/comfyanonymous/ComfyUI/archive/refs/tags/v0.45.0.tar.gz'
 $ComfyAlt = 'https://codeload.github.com/comfyanonymous/ComfyUI/tar.gz/refs/tags/v0.45.0'
 $ModelUrl = 'https://hf-mirror.com/OnomaAIResearch/Illustrious-XL-v1.1/resolve/main/Illustrious-XL-v1.1.safetensors'
+
+# Optional photoreal checkpoints. Same fp16 SDXL architecture as Illustrious,
+# just a different fine-tune - no extra nodes needed.
+$RealVisFile  = Join-Path $ModelDir 'RealVisXL_V5.0_fp16.safetensors'
+$RealVisUrl   = 'https://hf-mirror.com/SG161222/RealVisXL_V5.0/resolve/main/RealVisXL_V5.0_fp16.safetensors'
+$RealVisBytes = 6938065488
+$JugFile      = Join-Path $ModelDir 'Juggernaut-XI-v11_fp16.safetensors'
+$JugUrl       = 'https://hf-mirror.com/RunDiffusion/Juggernaut-XI-v11/resolve/main/Juggernaut-XI-v11_fp16.safetensors'
+$JugBytes     = 7105350536
+
+# FLUX Krea. 12B params, so on 8 GB only Q2_K fits at a usable speed.
+$FluxDir   = Join-Path $ComfyDir 'models\diffusion_models'
+$T5Dir     = Join-Path $ComfyDir 'models\text_encoders'
+$VaeDir    = Join-Path $ComfyDir 'models\vae'
+$FluxFile  = Join-Path $FluxDir 'flux1-krea-dev-Q2_K.gguf'
+$FluxUrl   = 'https://hf-mirror.com/QuantStack/FLUX.1-Krea-dev-GGUF/resolve/main/flux1-krea-dev-Q2_K.gguf'
+$FluxBytes = 4023690528
+$T5File    = Join-Path $T5Dir 't5-v1_1-xxl-encoder-Q4_K_S.gguf'
+$T5Url     = 'https://hf-mirror.com/city96/t5-v1_1-xxl-encoder-gguf/resolve/main/t5-v1_1-xxl-encoder-Q4_K_S.gguf'
+$T5Bytes   = 2738574528
+$ClipLFile = Join-Path $T5Dir 'clip_l.safetensors'
+$ClipLUrl  = 'https://hf-mirror.com/comfyanonymous/flux_text_encoders/resolve/main/clip_l.safetensors'
+$ClipLBytes = 246144152
+$VaeFile   = Join-Path $VaeDir 'flux_ae.safetensors'
+# black-forest-labs' own resolve URLs return 403 on hf-mirror; these mirrors work.
+$VaeUrl    = 'https://hf-mirror.com/ChuckMcSneed/FLUX.1-dev/resolve/main/ae.safetensors'
+$VaeBytes  = 335304388
 # Index mirrors in preference order. aliyun's PyPI mirror intermittently
 # returns ChunkedEncodingError on small files, so it is not first.
 $PipIndexes = @(
@@ -291,8 +332,85 @@ if ((Test-Path $ModelFile) -and (Get-Item $ModelFile).Length -gt 6000000000) {
   Ok (Format-Size $sz)
 }
 
-# ---------------------------------------------------------------- 7) verify
-Step 7 'smoke test'
+# ------------------------------------------------- 7) optional photoreal SDXL
+# Shared helper for the multi-GB weight downloads. curl -C - resumes, and the
+# final size is checked exactly, because hf-mirror will happily write a
+# rate-limit HTML page into the target file when it feels like it.
+function Get-Weight($Url, $File, [long]$Expect, $Label) {
+  New-Item -ItemType Directory -Force -Path (Split-Path -Parent $File) | Out-Null
+  if ((Test-Path $File) -and (Get-Item $File).Length -eq $Expect) {
+    Skip "$Label ($(Format-Size (Get-Item $File).Length))"
+    return $true
+  }
+  if (Test-Path $File) {
+    $cur = (Get-Item $File).Length
+    if ($cur -gt $Expect) { Remove-Item $File -Force }
+    else { Info "resuming at $(Format-Size $cur) of $(Format-Size $Expect)" }
+  }
+  $code = Invoke-Native 'curl.exe' @('-sSL', '--fail', '--retry', '5', '--retry-delay', '3', '-C', '-', '--progress-bar', '-o', "$File", "$Url") -Show
+  if ($code -ne 0) { Info "curl exit $code - re-run this script to resume $Label"; return $false }
+  $sz = (Get-Item $File).Length
+  if ($sz -ne $Expect) { Info "size mismatch for $Label`: got $(Format-Size $sz), want $(Format-Size $Expect) - re-run to resume"; return $false }
+  Ok "$Label ($(Format-Size $sz))"
+  return $true
+}
+
+if ($WithRealistic -or $WithJuggernaut) {
+  Step 7 'photoreal SDXL checkpoints'
+  New-Item -ItemType Directory -Force -Path $ModelDir | Out-Null
+  if ($WithRealistic) {
+    Info 'RealVisXL V5.0 fp16 - default for real-human output'
+    if (-not (Get-Weight $RealVisUrl $RealVisFile $RealVisBytes 'RealVisXL_V5.0_fp16.safetensors')) {
+      Info 'this one is optional - the rest of the install continues'
+    }
+  }
+  if ($WithJuggernaut) {
+    Info 'Juggernaut XI v11 - commercial/filmic look, steadier hands'
+    if (-not (Get-Weight $JugUrl $JugFile $JugBytes 'Juggernaut-XI-v11_fp16.safetensors')) {
+      Info 'this one is optional - the rest of the install continues'
+    }
+  }
+} else {
+  Step 7 'photoreal SDXL checkpoints'
+  Skip 'not requested - add -WithRealistic (RealVisXL V5) or -WithJuggernaut'
+}
+
+# --------------------------------------------------------------- 8) FLUX Krea
+if ($WithFlux) {
+  Step 8 'FLUX.1 Krea dev - Q2_K quantized (9.1 GB total)'
+  Info 'needs the ComfyUI-GGUF node pack to load .gguf weights'
+
+  $ggufDir = Join-Path $ComfyDir 'custom_nodes\ComfyUI-GGUF'
+  if (Test-Path (Join-Path $ggufDir 'nodes.py')) {
+    Skip 'ComfyUI-GGUF nodes'
+  } else {
+    $code = Invoke-Native 'git.exe' @('clone', '--depth', '1', 'https://github.com/city96/ComfyUI-GGUF.git', "$ggufDir")
+    if ($code -ne 0) { Info 'git clone failed - download the zip from github and unzip into custom_nodes\ComfyUI-GGUF' }
+    else { Ok 'ComfyUI-GGUF nodes' }
+  }
+
+  $ggufPy = 'import gguf, sentencepiece, google.protobuf; print("  gguf ok")'
+  $code = Invoke-Native $VenvPy @('-c', $ggufPy)
+  if ($code -ne 0) {
+    Info 'installing gguf / sentencepiece / protobuf...'
+    $null = Invoke-Native $VenvPy @('-m', 'pip', 'install', '--no-cache-dir', '--index-url', $PipIndex, 'gguf>=0.13.0', 'sentencepiece', 'protobuf')
+  }
+  Ok 'gguf python deps'
+
+  $fluxOk = $true
+  if (-not (Get-Weight $FluxUrl $FluxFile $FluxBytes 'flux1-krea-dev-Q2_K.gguf')) { $fluxOk = $false }
+  if (-not (Get-Weight $T5Url $T5File $T5Bytes 't5-v1_1-xxl-encoder-Q4_K_S.gguf')) { $fluxOk = $false }
+  if (-not (Get-Weight $ClipLUrl $ClipLFile $ClipLBytes 'clip_l.safetensors')) { $fluxOk = $false }
+  if (-not (Get-Weight $VaeUrl $VaeFile $VaeBytes 'flux_ae.safetensors')) { $fluxOk = $false }
+  if (-not $fluxOk) { Info 'FLUX weights incomplete - re-run this script to resume' }
+  else { Info 'FLUX needs ~82 s/image on an 8 GB card (3-4x SDXL) and shows quantization spots on skin' }
+} else {
+  Step 8 'FLUX.1 Krea dev'
+  Skip 'not requested - add -WithFlux (+9.1 GB, needs ComfyUI-GGUF)'
+}
+
+# ---------------------------------------------------------------- 9) verify
+Step 9 'smoke test'
 $check = @'
 import torch, sys
 print("  torch     ", torch.__version__)

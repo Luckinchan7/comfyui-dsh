@@ -1,0 +1,86 @@
+{
+  "1": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+      "ckpt_name": "Juggernaut-XI-v11_fp16.safetensors"
+    }
+  },
+  "2": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "{{prompt}}",
+      "clip": [
+        "1",
+        1
+      ]
+    }
+  },
+  "3": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "freckles, moles, birthmark, beauty mark, blemishes, skin spots, dark spots, age spots, sun spots, liver spots, acne, pimples, acne scars, blackheads, rosacea, redness on cheeks, blotchy skin, uneven skin tone, patchy skin, textured skin, rough skin, oily skin, greasy skin, shiny forehead, large pores, visible pores, wrinkles, skin imperfection, dirty skin, cartoon, anime, illustration, painting, drawing, sketch, 3d render, cgi, octane render, unreal engine, plastic skin, airbrushed, waxy, doll, mannequin, oversmooth, oversaturated, deformed, bad anatomy, bad hands, extra fingers, blurry, lowres, jpeg artifacts, watermark, text, signature, logo",
+      "clip": [
+        "1",
+        1
+      ]
+    }
+  },
+  "4": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+      "width": "{{width}}",
+      "height": "{{height}}",
+      "batch_size": 1
+    }
+  },
+  "5": {
+    "class_type": "KSampler",
+    "inputs": {
+      "seed": "{{seed}}",
+      "steps": 30,
+      "cfg": 5,
+      "sampler_name": "dpmpp_2m",
+      "scheduler": "karras",
+      "denoise": 1,
+      "model": [
+        "1",
+        0
+      ],
+      "positive": [
+        "2",
+        0
+      ],
+      "negative": [
+        "3",
+        0
+      ],
+      "latent_image": [
+        "4",
+        0
+      ]
+    }
+  },
+  "6": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "5",
+        0
+      ],
+      "vae": [
+        "1",
+        2
+      ]
+    }
+  },
+  "7": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "dsh-jug",
+      "images": [
+        "6",
+        0
+      ]
+    }
+  }
+}

@@ -25,11 +25,15 @@ if defined ALREADY goto :running
 echo.
 echo   Starting ComfyUI from %ROOT%
 echo   URL:        http://127.0.0.1:8188
-echo   The first model load takes 30-60 seconds.
+echo   First image includes a 30-60 s model load; after that ~20-30 s at 832x1216.
 echo.
 
 cd /d "%ROOT%\ComfyUI-0.45.0"
-"%ROOT%\venv\Scripts\python.exe" -s main.py --listen 127.0.0.1 --port 8188 --cache-none
+REM --cache-lru 8 keeps node results across runs; --cache-none (ComfyUI default off,
+REM but a common bad copy) re-reads the 6.5 GB weights for every single image.
+REM --reserve-vram 0.3 leaves 300 MB for the desktop. Do NOT add --fast or
+REM --enable-triton-backend: both are slower on 8 GB cards (see docs/PERFORMANCE.md).
+"%ROOT%\venv\Scripts\python.exe" -s main.py --listen 127.0.0.1 --port 8188 --cache-lru 8 --reserve-vram 0.3
 
 echo.
 echo   ComfyUI stopped.

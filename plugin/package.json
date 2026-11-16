@@ -1,0 +1,27 @@
+{
+  "name": "dsh-comfy-models",
+  "version": "0.1.0",
+  "description": "在 DSH 里自由切换本机 ComfyUI 已有的生图底模：自动枚举 checkpoints / diffusion_models，一键生成工作流、一键切换当前生图模型。",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": {
+      "default": "./lib/index.js"
+    },
+    "./catalog": "./lib/catalog.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "README.md"
+  ],
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "comfyui",
+    "comfyui-models",
+    "image-generation",
+    "model-switch"
+  ],
+  "license": "MIT"
+}

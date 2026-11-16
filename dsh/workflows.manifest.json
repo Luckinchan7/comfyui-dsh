@@ -8,5 +8,45 @@
     "name": "Illustrious-XL-Edit",
     "presetPrompt": "best quality, masterpiece, highly detailed",
     "file": "workflows/Illustrious-XL-Edit.json"
+  },
+  {
+    "name": "RealVisXL-V5",
+    "presetPrompt": "RAW photo, photorealistic, natural skin texture, sharp focus, high detail",
+    "file": "workflows/RealVisXL-V5.json"
+  },
+  {
+    "name": "RealVisXL-V5-Edit",
+    "presetPrompt": "RAW photo, photorealistic, natural skin texture, sharp focus",
+    "file": "workflows/RealVisXL-V5-Edit.json"
+  },
+  {
+    "name": "Juggernaut-XI-Edit",
+    "presetPrompt": "RAW photo, photorealistic, natural skin texture, sharp focus",
+    "file": "workflows/Juggernaut-XI-Edit.json"
+  },
+  {
+    "name": "RealVisXL-V5-HiRes",
+    "presetPrompt": "RAW photo, photorealistic, natural skin texture, ultra detailed, sharp focus",
+    "file": "workflows/RealVisXL-V5-HiRes.json"
+  },
+  {
+    "name": "Juggernaut-XI",
+    "presetPrompt": "RAW photo, photorealistic, natural skin texture, sharp focus, high detail",
+    "file": "workflows/Juggernaut-XI.json"
+  },
+  {
+    "name": "Juggernaut-XI-HiRes",
+    "presetPrompt": "RAW photo, photorealistic, natural skin texture, ultra detailed, sharp focus",
+    "file": "workflows/Juggernaut-XI-HiRes.json"
+  },
+  {
+    "name": "FLUX-Krea",
+    "presetPrompt": "RAW photo, photorealistic, natural skin texture, sharp focus, high detail",
+    "file": "workflows/FLUX-Krea.json"
+  },
+  {
+    "name": "FLUX-Krea-Edit",
+    "presetPrompt": "RAW photo, photorealistic, natural skin texture, sharp focus",
+    "file": "workflows/FLUX-Krea-Edit.json"
   }
 ]

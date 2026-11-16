@@ -120,8 +120,18 @@ node .\dsh\apply-workflows.mjs
 ComfyUI 没启动。双击 `启动ComfyUI.bat`，等 `Starting server` 出来再试。
 
 **出图很慢（> 3 分钟）**
-内存不够。ComfyUI 启动参数里已经有 `--cache-none`，还要关掉占内存的程序
-（浏览器标签、壁纸软件）。16 GB 机器上实测 1000×1500 出图约 45–60 秒。
+先看显存，不是内存。任务管理器 → 性能 → GPU → 专用 GPU 内存，或者：
+
+```powershell
+nvidia-smi --query-gpu=memory.used,memory.free --format=csv
+```
+
+`memory.free` 低于 4 GB 就是它——关浏览器标签、微信小程序、NVIDIA Overlay。
+8 GB 卡上剩 6.2 GB 跑一张 832×1216 是 26–33 秒，剩 3.4 GB 就变 142 秒。
+
+启动参数只该有 `--cache-lru 8 --reserve-vram 0.3`。掺了 `--fast cublas_ops`、
+`--fast fp16_accumulation` 或 `--enable-triton-backend` 会慢一个数量级
+（原因见 [PERFORMANCE.md](PERFORMANCE.md)）。
 
 **换显卡了 / 搬目录了**
 整个文件夹搬过去，重跑一次 `install.ps1`，它会重指 `pyvenv.cfg`，环境继续能用。

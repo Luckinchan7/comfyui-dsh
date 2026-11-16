@@ -55,11 +55,11 @@ provider 不同、端点不同、鉴权不同。前一条链路再通，后一�
 
 | 项 | 云端 | 本地 |
 |---|---|---|
-| 单图耗时 | 5–20 秒 | 56–70 秒（RTX 5060 Laptop） |
+| 单图耗时 | 5–20 秒 | 26–33 秒（RTX 5060 Laptop 8 GB，832×1216） |
 | 模型能力 | Qwen-Image / GPT-Image，20B+ | SDXL 2.6B |
 | 图内文字 | 基本正确 | 会乱，别指望 |
 | 手脚细节 | 较好 | 偶尔崩 |
-| 磁盘 | 0 | 11 GB |
+| 磁盘 | 0 | 15 GB（四底模全装 33 GB）|
 | 显存 | 0 | 6.5–7 GB |
 | 边际成本 | 按张计费 | 0（电费除外） |
 | 内容限制 | 服务端判定 | 无 |
@@ -71,9 +71,17 @@ provider 不同、端点不同、鉴权不同。前一条链路再通，后一�
 
 | 模型 | 参数 | 权重 | 8 GB 可行？ |
 |---|---|---|---|
-| SDXL（Illustrious / NoobAI） | 2.6B | 6.5 GB | ✅ 原生 1024，56 秒 |
-| Flux.1-dev | 12B | 23 GB | ⚠️ 只能 GGUF Q4，2–3 分钟/张 |
+| SDXL（Illustrious / RealVisXL / Juggernaut） | 2.6B | 6.5 GB | ✅ 原生 1024，26–33 秒 |
+| Flux.1-Krea dev GGUF Q2_K | 12B | 3.7 GB | ⚠️ 能跑，82 秒/张，皮肤有量化伪影 |
+| Flux.1-Krea dev GGUF Q3_K_S | 12B | 5.0 GB | ❌ 装得进显存但每步 131 秒 |
+| Flux.1-Krea dev GGUF Q4_K_S | 12B | 6.3 GB | ❌ 溢出到内存，每步 130–400 秒 |
 | Qwen-Image | 20B | 40 GB | ❌ 跑不动 |
 
-SDXL 是这张卡的甜点。它的生态（LoRA、ControlNet、embedding）也是二次元插画的事实标准，
-要特定角色只需挂对应 LoRA，不用换底模。
+SDXL 是这张卡的甜点。更要紧的是它的生态：LoRA、ControlNet、embedding 都是围绕
+SDXL 长的，要特定角色只需挂对应 LoRA，不用换底模。
+
+FLUX 那条 `Q3_K_S` 值得单独记一笔：日志里 `loaded completely; 5.0/5.7 GB, full load: True`
+看起来完美，但每步 131–144 秒——低比特量化在 SM120 上走慢路径。**能装下不等于能用**，
+这是 8 GB 卡上最容易踩的坑。
+
+更细的取舍见 [MODELS.md](MODELS.md)，参数调优见 [PERFORMANCE.md](PERFORMANCE.md)。

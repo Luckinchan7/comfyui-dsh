@@ -24,3 +24,6 @@ desktop.ini
 # ---- secrets ----
 .env
 *.token
+
+# ---- node deps pulled only to run dsh/export-from-profile.mjs ----
+node_modules/
