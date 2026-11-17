@@ -108,12 +108,13 @@ FaceID 同样能锁住，但产出的脸会往写实方向走——因为身份�
 
 ## 五、DSH 工作流
 
-已注册两条，都吃 `[1 image] + [size]`：
+已注册三条，都吃 `[1 image] + [size]`：
 
 | 名字 | 底模 | 说明 |
 |---|---|---|
 | `RealVisXL-V5-FaceID` | RealVisXL_V5.0_fp16 | 纪实/生活档，默认 |
 | `Juggernaut-XI-FaceID` | Juggernaut-XI-v11_fp16 | 商业/电影档 |
+| `Juggernaut-XI-FaceID-HiRes` | Juggernaut-XI-v11_fp16 | 同上 + 1.5× 二次采样，1248×1824 |
 
 用 `edit_image` 时显式指定：
 
@@ -128,6 +129,10 @@ edit_image({
 
 注意 `{{image}}` 只接 1 张；传 2 张会报
 `ComfyUI workflow has 1 {{image}} image input(s) but this call has 2 source image(s)`。
+
+这些工作流都吃 `{{width}}` / `{{height}}`，`size` 参数有效。但胶囊里的选择优先于
+`workflow:` 参数（见仓库根目录 README 的「胶囊选什么，就一定出什么」一节），
+想换工作流要在输入栏胶囊里改。
 
 ---
 

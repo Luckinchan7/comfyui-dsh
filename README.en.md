@@ -1,9 +1,9 @@
 # comfyui-dsh — local image generation, ComfyUI + DeepSeek Harness
 
 [![DSH target](https://img.shields.io/badge/DeepSeek%20Harness-0.2.2--rc.3-4f46e5)](docs/COMPATIBILITY.md)
-[![version](https://img.shields.io/badge/version-1.3.0-16a34a)](https://github.com/devin667/comfyui-dsh/releases/tag/v1.3.0)
+[![version](https://img.shields.io/badge/version-1.3.1-16a34a)](https://github.com/devin667/comfyui-dsh/releases/tag/v1.3.1)
 [![checkpoints](https://img.shields.io/badge/checkpoints-4-0ea5e9)](docs/MODELS.md)
-[![workflows](https://img.shields.io/badge/workflows-12-8b5cf6)](dsh/workflows)
+[![workflows](https://img.shields.io/badge/workflows-13-8b5cf6)](dsh/workflows)
 [![license](https://img.shields.io/badge/license-MIT-a3a3a3)](LICENSE)
 [![platform](https://img.shields.io/badge/platform-Windows%20%2F%20RTX%2050-f97316)](docs/COMPATIBILITY.md)
 
@@ -199,6 +199,44 @@ It edits the profile's `cordis.patch.yml`, which is watched by HMR — **changes
 effect in about fifteen seconds, no DSH restart needed**. Details in
 [plugin/README.md](plugin/README.md).
 
+### What the capsule says is what you get
+
+Stock `dsh-image-gen` treats the workflow picked in the composer capsule as a **default only** —
+the moment the agent passes `workflow: "..."` in the tool call, that wins, and you get
+"I picked A, B came out". The result card also just says `API workflow`, so you cannot audit it later.
+
+`scripts/patch-dsh-image-gen.py` fixes three things (idempotent, `--revert` restores):
+
+| Change | Effect |
+|---|---|
+| Capsule wins | The capsule selection can no longer be overridden by call arguments; when a call argument is ignored the result carries a note saying so |
+| Mode validation | Capsule on `-Edit` but `generate_image` called (or the reverse), or source-image count mismatch → throws a Chinese error naming the closest alternative |
+| Checkpoint on the card | Reads `CheckpointLoaderSimple.ckpt_name` / `UnetLoaderGGUF.unet_name` from the workflow JSON and shows the real checkpoint next to the card title |
+
+```powershell
+python .\scripts\patch-dsh-image-gen.py --check   # see what would change
+python .\scripts\patch-dsh-image-gen.py           # apply
+```
+
+**The plugin must be reloaded** (toggle `dsh-image-gen` off and on in `plugin_manager`);
+editing the file alone does nothing — the text is swapped but the runtime still holds the
+old code, and errors still come out in the old English wording.
+
+Set `comfyuiPinActiveWorkflow: false` to restore the original call-argument-wins behaviour.
+
+### Auditing: which checkpoint actually drew this
+
+ComfyUI embeds the whole workflow in the PNG `tEXt` chunk, so no UI label has to be trusted:
+
+```powershell
+python .\scripts\which_workflow.py                                  # latest 8 dsh-*
+python .\scripts\which_workflow.py ..\ComfyUI-0.45.0\output\a.png   # specific files
+```
+
+Prints the checkpoint filename, steps/cfg/sampler/denoise per sampling pass, FaceID preset and
+LoRA strength, and the filename prefix. Two-pass HiRes images list both passes
+(`30 steps ... | 18 steps ... denoise0.35`).
+
 ---
 
 ## What gets installed
@@ -329,7 +367,7 @@ python-base/              standalone Python 3.12 (relocatable)
 venv/                     Python environment
 slider/                   Denoise slider (server.mjs / index.html / cli.mjs)
 dsh/
-  workflows/              10 workflow JSON files (4 checkpoints × text2img/edit + 2 HiRes)
+  workflows/              13 workflow JSON files (4 checkpoints × text2img/edit + 3 HiRes + 3 FaceID)
   workflows.manifest.json workflow metadata + preset prompts
   apply-workflows.mjs     writes into cordis.patch.yml
   export-from-profile.mjs reverse export from the profile
@@ -338,6 +376,9 @@ plugin/                   dsh-comfy-models (catalog / index / yaml-store + negat
 scripts/
   fetch_parts.sh          resumable downloader (validates 206 + byte count + magic)
   bench_final.py          benchmark script
+  which_workflow.py       read the workflow embedded in a PNG to find which checkpoint made it
+  patch-dsh-image-gen.py  make dsh-image-gen obey the capsule's workflow (idempotent, --revert)
+  test-dsh-image-gen-pin.py  unit tests for that patch (14 assertions, no DSH runtime needed)
   pack-release.ps1        git archive packaging
   make-release.py         create the GitHub release and upload zip + SHA256SUMS
 docs/
@@ -413,6 +454,7 @@ part's byte count, and the file magic number.
 | v1.2.1 (2026-11-17) | same (launcher rewrite: no port crash, auto-open when ready, ASCII fallback) | same | same |
 | v1.2.2 (2026-11-17) | same (no browser by default, `-open` to open one) | same | same |
 | **v1.3.0 (2026-11-17)** | same (IPAdapter FaceID identity lock + 2 workflows) | same | same |
+| **v1.3.1 (2026-11-18)** | same (capsule-wins patch, checkpoint on the card, 13 workflows, audit script) | same | same |
 
 Per-change details in **[CHANGELOG.md](CHANGELOG.md)**.
 

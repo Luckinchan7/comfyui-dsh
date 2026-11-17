@@ -1,9 +1,9 @@
 # comfyui-dsh — 本地生图，ComfyUI + DeepSeek Harness
 
 [![DSH target](https://img.shields.io/badge/DeepSeek%20Harness-0.2.2--rc.3-4f46e5)](docs/COMPATIBILITY.md)
-[![version](https://img.shields.io/badge/version-1.3.0-16a34a)](https://github.com/devin667/comfyui-dsh/releases/tag/v1.3.0)
+[![version](https://img.shields.io/badge/version-1.3.1-16a34a)](https://github.com/devin667/comfyui-dsh/releases/tag/v1.3.1)
 [![checkpoints](https://img.shields.io/badge/checkpoints-4-0ea5e9)](docs/MODELS.md)
-[![workflows](https://img.shields.io/badge/workflows-12-8b5cf6)](dsh/workflows)
+[![workflows](https://img.shields.io/badge/workflows-13-8b5cf6)](dsh/workflows)
 [![license](https://img.shields.io/badge/license-MIT-a3a3a3)](LICENSE)
 [![platform](https://img.shields.io/badge/platform-Windows%20%2F%20RTX%2050-f97316)](docs/COMPATIBILITY.md)
 
@@ -183,6 +183,42 @@ powershell -ExecutionPolicy Bypass -File .\dsh\install-plugin.ps1
 改的是 profile 的 `cordis.patch.yml`，该文件被 HMR 监听，**改完十几秒自动生效，不用重启 DSH**。
 细节见 [plugin/README.md](plugin/README.md)。
 
+### 胶囊选什么，就一定出什么
+
+`dsh-image-gen` 原版有个隐蔽行为：输入栏胶囊里选的工作流只是**默认值**，
+Agent 一旦在工具调用里传了 `workflow: "..."` 就会被覆盖，于是"我选了 A、出来的是 B"。
+卡片上又只写 `API workflow`，事后无法对账。
+
+`scripts/patch-dsh-image-gen.py` 改掉这三件事（幂等，`--revert` 可还原）：
+
+| 改动 | 效果 |
+|---|---|
+| 胶囊优先 | 胶囊里的选择不再被调用参数覆盖；真被忽略时结果里带一句提示 |
+| 模式校验 | 胶囊选了 `-Edit` 却调 `generate_image`（或反过来）、参考图张数不符，直接抛中文错误并指出「最接近的是「X」」 |
+| 底模上卡 | 从工作流 JSON 里读 `CheckpointLoaderSimple.ckpt_name` / `UnetLoaderGGUF.unet_name`，卡片标题旁显示真实底模 |
+
+```powershell
+python .\scripts\patch-dsh-image-gen.py --check   # 先看会改哪几处
+python .\scripts\patch-dsh-image-gen.py           # 打补丁
+```
+
+**改完必须重载插件**（`plugin_manager` 里关掉 `dsh-image-gen` 再打开），光改文件不生效 ——
+文本层面已经换掉了，运行时还是旧代码，报错还是旧的英文串。
+
+不想要这个行为就设 `comfyuiPinActiveWorkflow: false`，回到"调用参数优先"的原版逻辑。
+
+### 事后对账：这张图到底是谁画的
+
+ComfyUI 把整张工作流写进 PNG 的 `tEXt` 块，所以不用信任何界面上的字：
+
+```powershell
+python .\scripts\which_workflow.py                                  # 最近 8 张 dsh-*
+python .\scripts\which_workflow.py ..\ComfyUI-0.45.0\output\a.png   # 指定文件
+```
+
+输出底模文件名、每段采样的步数/cfg/采样器/denoise、FaceID preset 与 LoRA 强度、文件名前缀。
+HiRes 那种两段采样的会列出两行（`30步 ... | 18步 ... denoise0.35`）。
+
 ### 装了什么
 
 | 内容 | 位置 | 说明 |
@@ -287,7 +323,7 @@ python-base/              独立 Python 3.12（可整目录搬移）
 venv/                     Python 环境
 slider/                   Denoise 滑杆（server.mjs / index.html / cli.mjs）
 dsh/
-  workflows/              10 条 workflow JSON（4 底模 × 文生图/改图 + 2 条 HiRes）
+  workflows/              13 条 workflow JSON（4 底模 × 文生图/改图 + 3 条 HiRes + 3 条 FaceID）
   workflows.manifest.json 工作流元数据 + 预设提示词
   apply-workflows.mjs     写进 cordis.patch.yml
   export-from-profile.mjs 从 profile 反向导出
@@ -296,6 +332,9 @@ plugin/                   dsh-comfy-models（catalog / index / yaml-store + 负�
 scripts/
   fetch_parts.sh          断点续传下载器（校验 206 + 字节数 + 魔数）
   bench_final.py          测速脚本
+  which_workflow.py       读 PNG 里嵌的工作流，反查这张图是哪条工作流哪个底模出的
+  patch-dsh-image-gen.py  让 dsh-image-gen 严格按胶囊选的工作流出图（幂等，可 --revert）
+  test-dsh-image-gen-pin.py  上面那个补丁的单元测试（14 条断言，不需要 DSH 运行时）
   pack-release.ps1        git archive 打包发行版
   make-release.py         建 GitHub release 并上传 zip + SHA256SUMS
 docs/
@@ -363,6 +402,7 @@ hf-mirror 被限流时会把报错页当正文写进文件，大小完全吻合�
 | v1.2.1（2026-11-17） | 同上（启动器重写：不再撞端口、就绪自动开页、ASCII 备胎） | 同上 | 同上 |
 | v1.2.2（2026-11-17） | 同上（默认不开浏览器，`-open` 才开） | 同上 | 同上 |
 | **v1.3.0（2026-11-17）** | 同上（新增 IPAdapter FaceID 保脸换装 + 2 条工作流） | 同上 | 同上 |
+| **v1.3.1（2026-11-18）** | 同上（胶囊优先补丁、底模上卡、13 条工作流、对账脚本） | 同上 | 同上 |
 
 逐条变更见 **[CHANGELOG.md](CHANGELOG.md)**。
 

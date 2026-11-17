@@ -16,6 +16,34 @@
 
 ---
 
+## [1.3.1] — 2026-11-18
+
+### 新增
+
+- **`scripts/patch-dsh-image-gen.py`**：让 `dsh-image-gen` 严格按输入栏胶囊里选的工作流出图。
+  三处行为改动 —— 胶囊优先（调用参数不再覆盖）、模式不匹配抛中文错误并给出最接近的替代项、
+  卡片显示真实底模文件名。幂等，带 `--check` / `--revert`，设 `comfyuiPinActiveWorkflow: false` 可关闭。
+- **`scripts/which_workflow.py`**：读 PNG 里 `tEXt` 块嵌的工作流，反查任意一张图是哪条工作流、
+  哪个底模、什么采样参数出的。HiRes 两段采样会分别列出。
+- **`scripts/test-dsh-image-gen-pin.py`**：上面那个补丁的单元测试，14 条断言，不需要 DSH 运行时
+  （从打包文件里按花括号配平抠出函数，拼桩模块跑）。
+- **`Juggernaut-XI-FaceID-HiRes`** 工作流：FaceID 保脸 + 1.5× 二次采样，1248×1824 输出。
+
+### 变更
+
+- 工作流 12 → 13 条，`workflows.manifest.json` 同步。
+- 三个脚本去掉写死的绝对路径：插件目录按 `--plugin-dir` → `DSH_IMAGE_GEN_DIR` →
+  `~/.dsh/profiles/{desktop,default}/node_modules` 顺序找，node 找不到时退回 `PATH`，
+  临时文件落到系统 temp 而不是 `D:\ComfyUI\dl\`。
+- `which_workflow.py` 输出强制 UTF-8，避免 GBK 控制台下中文变乱码。
+
+### 已知问题
+
+- 补丁改的是 `node_modules` 里的打包产物，`dsh-image-gen` 升级后会被覆盖，需要重跑。
+- 改完必须重载插件（`plugin_manager` 关再开），光改文件运行时仍是旧代码。
+
+---
+
 ## [1.3.0] — 2026-11-17
 
 ### 新增
@@ -293,7 +321,8 @@ README 从纯文字改成图文页。补上 banner、四张实测截图，中英
 | v1.1.0 | + RealVisXL V5 / Juggernaut XI / FLUX Krea | `--cache-lru 8 --reserve-vram 0.3` | 15–33 GB |
 | v1.1.1 | 同上（纯文档） | 同上 | 同上 |
 
-[未发布]: https://github.com/devin667/comfyui-dsh/compare/v1.2.0...HEAD
+[未发布]: https://github.com/devin667/comfyui-dsh/compare/v1.3.1...HEAD
+[1.3.1]: https://github.com/devin667/comfyui-dsh/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/devin667/comfyui-dsh/compare/v1.2.2...v1.3.0
 [1.2.2]: https://github.com/devin667/comfyui-dsh/compare/v1.2.1...v1.2.2
 [1.2.1]: https://github.com/devin667/comfyui-dsh/compare/v1.2.0...v1.2.1
