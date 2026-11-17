@@ -1,13 +1,13 @@
 # comfyui-dsh — local image generation, ComfyUI + DeepSeek Harness
 
 [![DSH target](https://img.shields.io/badge/DeepSeek%20Harness-0.2.2--rc.3-4f46e5)](docs/COMPATIBILITY.md)
-[![version](https://img.shields.io/badge/version-1.2.2-16a34a)](https://github.com/devin667/comfyui-dsh/releases/tag/v1.2.2)
+[![version](https://img.shields.io/badge/version-1.3.0-16a34a)](https://github.com/devin667/comfyui-dsh/releases/tag/v1.3.0)
 [![checkpoints](https://img.shields.io/badge/checkpoints-4-0ea5e9)](docs/MODELS.md)
-[![workflows](https://img.shields.io/badge/workflows-10-8b5cf6)](dsh/workflows)
+[![workflows](https://img.shields.io/badge/workflows-12-8b5cf6)](dsh/workflows)
 [![license](https://img.shields.io/badge/license-MIT-a3a3a3)](LICENSE)
 [![platform](https://img.shields.io/badge/platform-Windows%20%2F%20RTX%2050-f97316)](docs/COMPATIBILITY.md)
 
-[中文说明](README.md) · **English** · [Changelog](CHANGELOG.md) · [Compatibility](docs/COMPATIBILITY.md)
+[中文说明](README.md) · **English** · [Changelog](CHANGELOG.md) · [Compatibility](docs/COMPATIBILITY.md) · [Face swap](docs/IPADAPTER.md)
 
 ![banner](docs/banner.svg)
 
@@ -53,6 +53,19 @@ Same prompt, three checkpoints, three different spellings:
 ![In-image text comparison](docs/preview/text-rendering.jpg)
 
 `KRA COFFEE` / `KREA. COFFEE` / `KIRE A`. Add text in post.
+
+### Keeping the same person
+
+![IPAdapter FaceID](docs/preview/ipadapter-faceid-real.jpg)
+
+One real photo as reference, four outfits across four scenes, the face never moves. This runs
+IPAdapter **FaceID PLUS V2**: insightface extracts a 512-d identity vector and only that vector
+enters cross-attention, so changing clothes no longer fights the reference outfit and background
+colour no longer bleeds in.
+
+Do not use `PLUS (high strength)` for this — it injects the whole image, and on Illustrious it also
+produces horizontal rainbow banding. Full comparison, sweet-spot parameters and five pitfalls:
+**[docs/IPADAPTER.md](docs/IPADAPTER.md)**.
 
 ### The Denoise slider
 
@@ -398,7 +411,8 @@ part's byte count, and the file magic number.
 | v1.1.1 (2026-11-16) | same (docs only: English README, changelog, compatibility) | same | same |
 | v1.2.0 (2026-11-16) | same (README overhaul: banner + four screenshots) | same | same |
 | v1.2.1 (2026-11-17) | same (launcher rewrite: no port crash, auto-open when ready, ASCII fallback) | same | same |
-| **v1.2.2 (2026-11-17)** | same (no browser by default, `-open` to open one) | same | same |
+| v1.2.2 (2026-11-17) | same (no browser by default, `-open` to open one) | same | same |
+| **v1.3.0 (2026-11-17)** | same (IPAdapter FaceID identity lock + 2 workflows) | same | same |
 
 Per-change details in **[CHANGELOG.md](CHANGELOG.md)**.
 

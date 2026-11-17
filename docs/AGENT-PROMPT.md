@@ -1,6 +1,6 @@
 # 给别人用的安装 Prompt
 
-**返回** [README](../README.md) · [English](../README.en.md) · [变更日志](../CHANGELOG.md)
+**返回** [README](../README.md) · [English](../README.en.md) · [变更日志](../CHANGELOG.md) · [保脸换装](IPADAPTER.md)
 
 把下面整段复制给你的 DSH（或任何能跑命令的 AI agent），它会自己装完。
 

@@ -16,6 +16,38 @@
 
 ---
 
+## [1.3.0] — 2026-11-17
+
+### 新增
+
+- **IPAdapter FaceID 保脸换装**。装 `ComfyUI_IPAdapter_plus`，配 `ip-adapter-faceid-plusv2_sdxl`
+  + 对应 LoRA + `ip-adapter-plus-face_sdxl_vit-h`，insightface `buffalo_l` 算 512 维身份向量。
+  同一个人换衣服/换场景/换姿势，脸不变。
+- 两条 DSH 工作流：`RealVisXL-V5-FaceID`、`Juggernaut-XI-FaceID`，吃 `[1 image] + [size]`。
+- **`docs/IPADAPTER.md`**：两种 preset（PLUS vs FaceID PLUS V2）的机制差别、参数甜点表、
+  真人/动漫两组实测、五个坑（hf-mirror 的 Content-Length、`.bin` 是 ZIP 不是 safetensors、
+  `models/insightface/models/` 双层目录、onnxruntime 无 CUDA provider、preset 名字带括号）。
+- README 中英文各加一节「锁住同一个人 / Keeping the same person」+ 三张对照图
+  （`ipadapter-faceid-real.jpg`、`ipadapter-banding.jpg`、`ipadapter-dressup.jpg`）。
+
+### 变更
+
+- 工作流 10 → 12 条。
+- Python 依赖新增：`insightface 2.1`、`onnxruntime 1.32.0`、`opencv-python 5.0.0.93`、
+  `scikit-image 0.26.0`、`onnx 1.23.2`。
+- 磁盘占用增加约 6.4 GB（FaceID 1.49 GB + 两个 plus 0.85×2 + LoRA 0.37 + clip_vision 2.53
+  + buffalo_l 0.34）。
+
+### 已知问题
+
+- `PLUS (high strength)` 在 Illustrious-XL 上会出横向彩虹条（`weight >= 0.35` 就出现），
+  写实 SDXL 上同参数干净。保脸请用 FaceID。
+- insightface 只取检测分值最高的那张脸，多人参考图会认错主角。
+- det_score < 0.4（大侧脸）时身份向量质量下降，脸开始飘。
+- 全身远景脸只占几十像素时 FaceID 基本失效。
+
+---
+
 ## [1.2.2] — 2026-11-17
 
 启动器默认不再弹浏览器。上一版把「服务已在运行 → 直接开浏览器」做成了无条件行为，
@@ -262,6 +294,7 @@ README 从纯文字改成图文页。补上 banner、四张实测截图，中英
 | v1.1.1 | 同上（纯文档） | 同上 | 同上 |
 
 [未发布]: https://github.com/devin667/comfyui-dsh/compare/v1.2.0...HEAD
+[1.3.0]: https://github.com/devin667/comfyui-dsh/compare/v1.2.2...v1.3.0
 [1.2.2]: https://github.com/devin667/comfyui-dsh/compare/v1.2.1...v1.2.2
 [1.2.1]: https://github.com/devin667/comfyui-dsh/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/devin667/comfyui-dsh/compare/v1.1.1...v1.2.0

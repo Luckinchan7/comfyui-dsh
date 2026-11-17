@@ -1,6 +1,6 @@
 # 适配说明
 
-**返回** [README](../README.md) · [English](../README.en.md) · [变更日志](../CHANGELOG.md)
+**返回** [README](../README.md) · [English](../README.en.md) · [变更日志](../CHANGELOG.md) · [保脸换装](IPADAPTER.md)
 
 这份文档回答一个问题：**在你这台机器上，这套东西能不能跑、能跑什么、要改哪里。**
 

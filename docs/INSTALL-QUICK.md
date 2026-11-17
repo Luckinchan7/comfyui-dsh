@@ -1,6 +1,6 @@
 # 三步装完（Windows）
 
-**返回** [README](../README.md) · [English](../README.en.md) · [变更日志](../CHANGELOG.md)
+**返回** [README](../README.md) · [English](../README.en.md) · [变更日志](../CHANGELOG.md) · [保脸换装](IPADAPTER.md)
 
 ## 前提
 
@@ -160,3 +160,31 @@ nvidia-smi --query-gpu=memory.used,memory.free --format=csv
 
 **想彻底删掉**
 删掉整个文件夹。没有服务、没有注册表、没有开机启动，显卡驱动也没动过。
+
+### 可选：保脸换装（IPAdapter FaceID，+6.4 GB）
+
+要"同一个人换衣服换场景"，需要额外装：
+
+```powershell
+git clone --depth 1 https://github.com/cubiq/ComfyUI_IPAdapter_plus.git "$ComfyDir\custom_nodes\ComfyUI_IPAdapter_plus"
+& "$Venv\Scripts\python.exe" -m pip install -i https://pypi.tuna.tsinghua.edu.cn/simple insightface onnxruntime
+```
+
+权重（四个，约 6.4 GB）：
+
+| 文件 | 目标目录 |
+|---|---|
+| `ip-adapter-faceid-plusv2_sdxl.bin` (1,487,555,181 B) | `models/ipadapter/` |
+| `ip-adapter-faceid-plusv2_sdxl_lora.safetensors` (371,842,896 B) | `models/loras/` |
+| `ip-adapter-plus-face_sdxl_vit-h.safetensors` (847,517,512 B) | `models/ipadapter/` |
+| `CLIP-ViT-H-14-laion2B-s32B-b79K.safetensors` (2,528,373,448 B) | `models/clip_vision/` |
+
+再下 insightface 的 buffalo_l 并解到 `models/insightface/models/buffalo_l/`（**注意双层 models**）：
+
+```bash
+bash scripts/fetch_parts.sh "https://github.com/deepinsight/insightface/releases/download/v0.7/buffalo_l.zip" \
+  dl/buffalo_l.zip 288621354 8 504b0304
+```
+
+细节、参数甜点、五个坑见 **[IPADAPTER.md](IPADAPTER.md)**。
+

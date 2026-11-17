@@ -48,5 +48,15 @@
     "name": "FLUX-Krea-Edit",
     "presetPrompt": "RAW photo, photorealistic, natural skin texture, sharp focus",
     "file": "workflows/FLUX-Krea-Edit.json"
+  },
+  {
+    "name": "RealVisXL-V5-FaceID",
+    "presetPrompt": "RAW photo, portrait of a person, natural skin texture, 85mm f/1.8, photorealistic, detailed face",
+    "file": "workflows/RealVisXL-V5-FaceID.json"
+  },
+  {
+    "name": "Juggernaut-XI-FaceID",
+    "presetPrompt": "RAW photo, portrait of a person, natural skin texture, 85mm f/1.8, photorealistic, detailed face",
+    "file": "workflows/Juggernaut-XI-FaceID.json"
   }
 ]

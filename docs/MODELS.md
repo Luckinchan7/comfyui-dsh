@@ -1,6 +1,6 @@
 # 底模选型：从二次元到写实（RTX 5060 Laptop 8 GB 实测）
 
-**返回** [README](../README.md) · [English](../README.en.md) · [变更日志](../CHANGELOG.md)
+**返回** [README](../README.md) · [English](../README.en.md) · [变更日志](../CHANGELOG.md) · [保脸换装](IPADAPTER.md)
 
 起因：原来装的 `Illustrious-XL v1.1` 是动漫底模，无论提示词怎么写都出插画。要真人照片
 就得换底模。这份文档是三个写实底模 + 一个 FLUX 量化档在同一台机器、同一批提示词下的

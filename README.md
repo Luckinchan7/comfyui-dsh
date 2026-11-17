@@ -1,13 +1,13 @@
 # comfyui-dsh — 本地生图，ComfyUI + DeepSeek Harness
 
 [![DSH target](https://img.shields.io/badge/DeepSeek%20Harness-0.2.2--rc.3-4f46e5)](docs/COMPATIBILITY.md)
-[![version](https://img.shields.io/badge/version-1.2.2-16a34a)](https://github.com/devin667/comfyui-dsh/releases/tag/v1.2.2)
+[![version](https://img.shields.io/badge/version-1.3.0-16a34a)](https://github.com/devin667/comfyui-dsh/releases/tag/v1.3.0)
 [![checkpoints](https://img.shields.io/badge/checkpoints-4-0ea5e9)](docs/MODELS.md)
-[![workflows](https://img.shields.io/badge/workflows-10-8b5cf6)](dsh/workflows)
+[![workflows](https://img.shields.io/badge/workflows-12-8b5cf6)](dsh/workflows)
 [![license](https://img.shields.io/badge/license-MIT-a3a3a3)](LICENSE)
 [![platform](https://img.shields.io/badge/platform-Windows%20%2F%20RTX%2050-f97316)](docs/COMPATIBILITY.md)
 
-中文 · [English](README.en.md) · [变更日志](CHANGELOG.md) · [适配说明](docs/COMPATIBILITY.md)
+中文 · [English](README.en.md) · [变更日志](CHANGELOG.md) · [适配说明](docs/COMPATIBILITY.md) · [保脸换装](docs/IPADAPTER.md)
 
 ![banner](docs/banner.svg)
 
@@ -51,6 +51,17 @@ kitchen making coffee, morning backlight, unedited`）、同一场景：
 ![图内文字对比](docs/preview/text-rendering.jpg)
 
 `KRA COFFEE` / `KREA. COFFEE` / `KIRE A`。要准确文字请后期加。
+
+### 锁住同一个人
+
+![IPAdapter FaceID 真人换装](docs/preview/ipadapter-faceid-real.jpg)
+
+同一张真人参考照，四套衣服四个场景，脸不动。走的是 IPAdapter **FaceID PLUS V2**：
+insightface 先算 512 维身份向量，只把向量送进 cross-attention，所以换装不会跟衣服打架、
+背景色调也不会渗。
+
+别用 `PLUS (high strength)`——它把整图特征一起灌进去，在 Illustrious 上还会出横向彩虹条。
+两种 preset 的差别、参数甜点、五个坑见 **[docs/IPADAPTER.md](docs/IPADAPTER.md)**。
 
 ### Denoise 滑杆
 
@@ -294,6 +305,7 @@ docs/
   MODELS.md               四个底模横向实测
   PERFORMANCE.md          启动参数调优与显存争用
   COMPATIBILITY.md        显卡/驱动/系统/版本适配矩阵
+  IPADAPTER.md            FaceID 保脸换装：两种 preset 差别、参数、五个坑
   preview/                README 用的截图
 启动ComfyUI.bat           启动 ComfyUI（默认不开浏览器，-open 才开）
 start.bat                 ASCII 版启动器，功能同上，中文路径炸掉时的备胎
@@ -349,7 +361,8 @@ hf-mirror 被限流时会把报错页当正文写进文件，大小完全吻合�
 | v1.1.1（2026-11-16） | 同上（纯文档：英文说明、变更日志、适配矩阵） | 同上 | 同上 |
 | v1.2.0（2026-11-16） | 同上（README 图文改版：banner + 四张实测截图） | 同上 | 同上 |
 | v1.2.1（2026-11-17） | 同上（启动器重写：不再撞端口、就绪自动开页、ASCII 备胎） | 同上 | 同上 |
-| **v1.2.2（2026-11-17）** | 同上（默认不开浏览器，`-open` 才开） | 同上 | 同上 |
+| v1.2.2（2026-11-17） | 同上（默认不开浏览器，`-open` 才开） | 同上 | 同上 |
+| **v1.3.0（2026-11-17）** | 同上（新增 IPAdapter FaceID 保脸换装 + 2 条工作流） | 同上 | 同上 |
 
 逐条变更见 **[CHANGELOG.md](CHANGELOG.md)**。
 
