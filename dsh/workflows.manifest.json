@@ -68,5 +68,10 @@
     "name": "Juggernaut-XI-FaceID-HiRes",
     "presetPrompt": "RAW photo, photorealistic, natural skin texture, sharp focus, fine detail",
     "file": "workflows/Juggernaut-XI-FaceID-HiRes.json"
+  },
+  {
+    "name": "Undress-Inpaint",
+    "presetPrompt": "RAW photo, photorealistic, natural skin texture, sharp focus",
+    "file": "workflows/Undress-Inpaint.json"
   }
 ]

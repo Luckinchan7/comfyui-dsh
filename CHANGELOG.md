@@ -16,6 +16,25 @@
 
 ---
 
+## [1.4.1] — 2026-11-19
+
+### 修复
+
+- **改图工作流现在真的吃 `size` / `aspect_ratio`**。`Illustrious-XL-Edit`、`RealVisXL-V5-Edit`、`RealVisXL-V5-Rework`、`Juggernaut-XI-Edit`、`FLUX-Krea-Edit` 五条原来都是 `LoadImage → VAEEncode` 直连，没有 `EmptyLatentImage`，也就没有 `{{width}}` / `{{height}}`：`edit_image` 传尺寸只会得到一句 `… sets its own frame size … was not applied`，出图永远等于源图分辨率。
+  修法是在 `LoadImage` 与 `VAEEncode` 之间插一个 `ImageScale`（`upscale_method: lanczos`、`width: "{{width}}"`、`height: "{{height}}"`、`crop: center`），并把 `VAEEncode.inputs.pixels` 指向它。现在 15 条工作流全部被标记为 `[size]`。
+- **`Undress-Inpaint` 回到了 manifest**。此前有一次 `git checkout -- dsh/` 把它从 `workflows.manifest.json` 里抹掉，`fix-workflows.mjs` 只写回 14 条，profile 里那条是残存的旧版本。
+
+### 变更
+
+- `RealVisXL-V5-Edit` / `-Rework` 的 `ImageScale` 节点号是 `12`（这两条原有 9 个节点）；其余三条用 `20`，避免与将来插节点撞号。
+- 五条改图工作流的 `crop` 都是 `center` —— 目标比例与源图不同时会裁掉边缘。想保住原构图就别传尺寸。
+
+### 已知问题
+
+- 裁切是硬切，没有做主体居中检测。人像居中问题不大，但主体偏在一侧的图会被切掉一部分。
+
+---
+
 ## [1.4.0] — 2026-11-19
 
 ### 新增
@@ -352,7 +371,8 @@ README 从纯文字改成图文页。补上 banner、四张实测截图，中英
 | v1.1.0 | + RealVisXL V5 / Juggernaut XI / FLUX Krea | `--cache-lru 8 --reserve-vram 0.3` | 15–33 GB |
 | v1.1.1 | 同上（纯文档） | 同上 | 同上 |
 
-[未发布]: https://github.com/devin667/comfyui-dsh/compare/v1.4.0...HEAD
+[未发布]: https://github.com/devin667/comfyui-dsh/compare/v1.4.1...HEAD
+[1.4.1]: https://github.com/devin667/comfyui-dsh/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/devin667/comfyui-dsh/compare/v1.3.1...v1.4.0
 [1.3.1]: https://github.com/devin667/comfyui-dsh/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/devin667/comfyui-dsh/compare/v1.2.2...v1.3.0

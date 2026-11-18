@@ -1,7 +1,7 @@
 # comfyui-dsh — 本地生图，ComfyUI + DeepSeek Harness
 
 [![DSH target](https://img.shields.io/badge/DeepSeek%20Harness-0.2.2--rc.3-4f46e5)](docs/COMPATIBILITY.md)
-[![version](https://img.shields.io/badge/version-1.4.0-16a34a)](https://github.com/devin667/comfyui-dsh/releases/tag/v1.4.0)
+[![version](https://img.shields.io/badge/version-1.4.1-16a34a)](https://github.com/devin667/comfyui-dsh/releases/tag/v1.4.1)
 [![checkpoints](https://img.shields.io/badge/checkpoints-4-0ea5e9)](docs/MODELS.md)
 [![workflows](https://img.shields.io/badge/workflows-15-8b5cf6)](dsh/workflows)
 [![license](https://img.shields.io/badge/license-MIT-a3a3a3)](LICENSE)
@@ -196,6 +196,10 @@ powershell -ExecutionPolicy Bypass -File .\dsh\install-plugin.ps1
 | 自动选对工作流 | 传的不合适就按「显式请求 → 同底模兄弟 → 同族兄弟 → 胶囊 → 其余」换成能干的，结果里带一句中文 notice 说明换成了哪条、为什么；一条能干的都没有才报错 |
 | 底模上卡 | 从工作流 JSON 里读 `CheckpointLoaderSimple.ckpt_name` / `UnetLoaderGGUF.unet_name`，卡片标题旁显示真实底模 |
 | 尺寸上卡 | 卡片显示生成图的**真实像素**，不再对非 `import` 来源留空 |
+
+改图工作流现在也都吃尺寸：每条 `-Edit` / `-Rework` 在 `LoadImage` 与 `VAEEncode` 之间
+插了一个 `ImageScale`（`lanczos` + `crop: center`），`edit_image` 传 `size` / `aspect_ratio`
+会真的生效；比例与原图不同时按目标比例裁边，想保原构图就不传。
 
 举例：`generate_image` 传了 `workflow: "RealVisXL-V5-Edit"`，自动改用 `RealVisXL-V5`，
 notice 写「请求的「RealVisXL-V5-Edit」有 1 个 `{{image}}` 输入（文生图要求 0 个），做不了这次调用，已自动改用「RealVisXL-V5」。」
@@ -410,6 +414,7 @@ hf-mirror 被限流时会把报错页当正文写进文件，大小完全吻合�
 | **v1.3.0（2026-11-17）** | 同上（新增 IPAdapter FaceID 保脸换装 + 2 条工作流） | 同上 | 同上 |
 | **v1.3.1（2026-11-18）** | 同上（胶囊优先补丁、底模上卡、13 条工作流、对账脚本） | 同上 | 同上 |
 | **v1.4.0（2026-11-19）** | 同上（选错工作流自动改道、FaceID 权重修正、Rework 工作流、Undress 提示词去冲突） | 同上 | 同上 |
+| **v1.4.1（2026-11-19）** | 同上（五条改图工作流补上 `size` / `aspect_ratio` 支持，15 条全部吃尺寸） | 同上 | 同上 |
 
 逐条变更见 **[CHANGELOG.md](CHANGELOG.md)**。
 

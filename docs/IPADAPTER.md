@@ -138,6 +138,13 @@ edit_image({
 
 这些工作流都吃 `{{width}}` / `{{height}}`，`size` / `aspect_ratio` 有效。
 
+**改图也能指定尺寸了**：早年 `-Edit` 系列是 `LoadImage → VAEEncode` 直连，没有 `EmptyLatentImage`，
+也就没有 `{{width}}` / `{{height}}`，传 `aspect_ratio` 只会得到一句
+`sets its own frame size … was not applied`。现在每条 `-Edit` / `-Rework` 都在
+`LoadImage` 和 `VAEEncode` 之间插了一个 `ImageScale`（`lanczos` + `crop: center`），
+把源图先缩放到目标画框再编码 —— 所以 `edit_image` 传 `size` / `aspect_ratio` 会真的生效，
+代价是比例与原图不同时会按目标比例裁掉边缘。想保住原构图就别传尺寸。
+
 **选错工作流不再失败**：传的工作流形状不对（文生图撞上带 `{{image}}` 的、改图撞上不带 `{{image}}` 的）时，插件按「显式请求 → 同底模兄弟 → 同族兄弟 → 胶囊 → 其余」顺序自动换成能干的，并在结果里带一句中文 notice 说明换成了哪条、为什么。只有一条能干的都没有才报错。所以写 `workflow: "RealVisXL-V5"` 去做改图，会**自动落到 `RealVisXL-V5-Edit`**，不会跳到 FLUX 或 Juggernaut。
 
 改图有强弱两档，按改动幅度选：

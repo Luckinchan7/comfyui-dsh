@@ -86,13 +86,26 @@
     "class_type": "VAEEncode",
     "inputs": {
       "pixels": [
-        "10",
+        "20",
         0
       ],
       "vae": [
         "1",
         2
       ]
+    }
+  },
+  "20": {
+    "class_type": "ImageScale",
+    "inputs": {
+      "image": [
+        "10",
+        0
+      ],
+      "upscale_method": "lanczos",
+      "width": "{{width}}",
+      "height": "{{height}}",
+      "crop": "center"
     }
   }
 }
