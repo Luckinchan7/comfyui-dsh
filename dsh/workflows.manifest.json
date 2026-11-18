@@ -20,6 +20,11 @@
     "file": "workflows/RealVisXL-V5-Edit.json"
   },
   {
+    "name": "RealVisXL-V5-Rework",
+    "presetPrompt": "RAW photo, photorealistic, natural skin texture, visible pores, fine detail, sharp focus",
+    "file": "workflows/RealVisXL-V5-Rework.json"
+  },
+  {
     "name": "Juggernaut-XI-Edit",
     "presetPrompt": "RAW photo, photorealistic, natural skin texture, sharp focus",
     "file": "workflows/Juggernaut-XI-Edit.json"
@@ -51,17 +56,17 @@
   },
   {
     "name": "RealVisXL-V5-FaceID",
-    "presetPrompt": "RAW photo, portrait of a person, natural skin texture, 85mm f/1.8, photorealistic, detailed face",
+    "presetPrompt": "RAW photo, photorealistic, natural skin texture, sharp focus",
     "file": "workflows/RealVisXL-V5-FaceID.json"
   },
   {
     "name": "Juggernaut-XI-FaceID",
-    "presetPrompt": "RAW photo, portrait of a person, natural skin texture, 85mm f/1.8, photorealistic, detailed face",
+    "presetPrompt": "RAW photo, photorealistic, natural skin texture, sharp focus",
     "file": "workflows/Juggernaut-XI-FaceID.json"
   },
   {
     "name": "Juggernaut-XI-FaceID-HiRes",
-    "presetPrompt": "RAW photo, portrait of a person, natural skin texture, 85mm f/1.8, photorealistic, ultra detailed, detailed face",
+    "presetPrompt": "RAW photo, photorealistic, natural skin texture, sharp focus, fine detail",
     "file": "workflows/Juggernaut-XI-FaceID-HiRes.json"
   }
 ]

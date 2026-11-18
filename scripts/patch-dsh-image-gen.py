@@ -1,13 +1,14 @@
-"""让 dsh-image-gen 的 ComfyUI 生图严格按「输入栏胶囊里选的工作流」执行。
+"""让 dsh-image-gen 的 ComfyUI 生图永不被参数或残留状态卡住。
 
 三个行为改动（幂等，可重复运行）：
 
-1. 胶囊优先 —— 工具调用里传的 workflow 参数不再能覆盖胶囊里的选择；
-   真被忽略时，结果里带一句提示。
-2. 模式不匹配直接报错 —— 胶囊选了 -Edit 却要文生图（或反过来）、
-   参考图张数不符，抛带工作流名字的中文错误，而不是让 ComfyUI 那边莫名失败。
-3. 卡片显示真实底模 —— 从工作流 JSON 里读 CheckpointLoaderSimple / UnetLoaderGGUF
+1. 自动选对工作流 —— 显式传的 workflow 优先；做不了这次调用时（文生图撞上
+   带 {{image}} 的、改图撞上不带 {{image}} 的、参考图张数不符）不再报错白跑，
+   而是顺次往后退：显式请求 → 胶囊里那条 → 全部工作流，取第一条能干的。
+   真的一个能干的都没有才报错。被替换时在结果里带一句提示。
+2. 卡片显示真实底模 —— 从工作流 JSON 里读 CheckpointLoaderSimple / UnetLoaderGGUF
    的 ckpt_name / unet_name 写进 output，对话卡片标题旁边就能看到。
+3. 尺寸读附件真实像素 —— 卡片上显示生成图的实际分辨率。
 
 用法：
     python scripts/patch-dsh-image-gen.py            # 打补丁
@@ -16,6 +17,7 @@
 
 插件目录按 --plugin-dir > DSH_IMAGE_GEN_DIR > ~/.dsh/profiles/desktop/node_modules 顺序找。
 改完要重载插件才生效（plugin_manager 关再开），光改文件不够。
+插件升级会覆盖补丁，升级后重跑一次即可。
 """
 
 import argparse
@@ -46,8 +48,6 @@ def find_plugin_dir():
 
 PLUGIN_DIR = find_plugin_dir()
 
-T = "\t"
-
 HELPERS = """// [comfyui-pin] 从工作流 JSON 里取出真实加载的底模文件名。
 function comfyUIBaseModel(workflowJson) {
 \tlet gguf;
@@ -65,54 +65,61 @@ function comfyUIBaseModel(workflowJson) {
 \t}
 \treturn gguf;
 }
-// [comfyui-pin] 解析这次调用该用哪条工作流，并在与请求不匹配时给出可操作的提示。
+// [comfyui-pin] 挑一条这次调用真能干的工作流。
+// 顺序：显式请求 → 它的同底模兄弟 → 它的同族兄弟 → 胶囊 → 胶囊的兄弟 → 其余。
+// 一律不因为「选错了」而失败 —— 只有一条能干的都没有时才报错。
 function comfyUIResolveWorkflow(active, args, sourceImages) {
-\tconst requested = typeof args.workflow === "string" ? args.workflow.trim() : "";
-\tconst workflow = selectComfyUIWorkflow(active, args.workflow);
-\tconst slots = comfyUIWorkflowSlots(workflow.json);
-\tconst editing = sourceImages > 0;
-\tconst sibling = (name, drop, add) => {
-\t\tconst guess = drop.length > 0 && name.endsWith(drop) ? name.slice(0, -drop.length) + add : name + add;
-\t\tconst found = active.workflows.find((entry) => entry.name === guess);
-\t\treturn found === void 0 ? "" : `最接近的是「${found.name}」。`;
-\t};
-\tif (!editing && slots.images > 0) throw new Error(`胶囊里选的工作流「${workflow.name}」含 ${String(slots.images)} 个 ${COMFYUI_IMAGE_PLACEHOLDER} 输入，是给 edit_image 用的，做不了文生图。${sibling(workflow.name, "-Edit", "")}请在输入栏胶囊里换成文生图工作流（RealVisXL-V5 / Juggernaut-XI / 带 -HiRes 的那几条）。`);
-\tif (editing && slots.images === 0) throw new Error(`胶囊里选的工作流「${workflow.name}」是文生图工作流，没有 ${COMFYUI_IMAGE_PLACEHOLDER} 输入，做不了 edit_image。${sibling(workflow.name, "", "-Edit")}请在输入栏胶囊里换成带 -Edit / -FaceID 的工作流。`);
-\tif (editing && slots.images !== sourceImages) throw new Error(`胶囊里选的工作流「${workflow.name}」有 ${String(slots.images)} 个 ${COMFYUI_IMAGE_PLACEHOLDER} 输入，这次传了 ${String(sourceImages)} 张参考图；数量必须一致。`);
-\tconst ignored = requested.length > 0 && requested !== workflow.name;
-\treturn {
-\t\tworkflow,
-\t\tbaseModel: comfyUIBaseModel(workflow.json),
-\t\tnotice: ignored ? `已按输入栏胶囊里的「${workflow.name}」出图，忽略了调用方请求的「${requested}」。要换工作流请直接在胶囊里改。` : void 0
-\t};
+	const requested = typeof args.workflow === "string" ? args.workflow.trim() : "";
+	const editing = sourceImages > 0;
+	const fits = (entry) => {
+		const slots = comfyUIWorkflowSlots(entry.json);
+		return editing ? slots.images === sourceImages : slots.images === 0;
+	};
+	const baseOf = (entry) => comfyUIBaseModel(entry.json) ?? "";
+	const familyOf = (name) => name.replace(/-(Edit|HiRes|FaceID|Inpaint)$/g, "");
+	const find = (name) => active.workflows.find((entry) => entry.name === name);
+	const explicit = requested.length > 0 ? find(requested) : void 0;
+	const pinned = active.workflow;
+	const anchor = explicit ?? pinned;
+	const anchorBase = anchor === void 0 ? "" : baseOf(anchor);
+	const anchorFamily = anchor === void 0 ? "" : familyOf(anchor.name);
+	const candidates = [];
+	const push = (entry) => {
+		if (entry !== void 0 && candidates.indexOf(entry) < 0) candidates.push(entry);
+	};
+	push(explicit);
+	for (const entry of active.workflows) if (anchorBase.length > 0 && baseOf(entry) === anchorBase) push(entry);
+	for (const entry of active.workflows) if (anchorFamily.length > 0 && familyOf(entry.name) === anchorFamily) push(entry);
+	push(pinned);
+	for (const entry of active.workflows) push(entry);
+	const chosen = candidates.find(fits);
+	if (chosen === void 0) {
+		const want = editing ? `需要恰好 ${String(sourceImages)} 个 ${COMFYUI_IMAGE_PLACEHOLDER} 输入的工作流` : `需要不含 ${COMFYUI_IMAGE_PLACEHOLDER} 的文生图工作流`;
+		const names = active.workflows.map((entry) => `「${entry.name}」`);
+		throw new Error(`没有能干这次调用的工作流：${want}。当前 ${String(active.workflows.length)} 条都不满足：${names.join("、")}。请先导入一条合适的工作流。`);
+	}
+	const notices = [];
+	const why = (entry) => editing ? `${String(comfyUIWorkflowSlots(entry.json).images)} 个 ${COMFYUI_IMAGE_PLACEHOLDER} 输入` : `不含 ${COMFYUI_IMAGE_PLACEHOLDER}`;
+	if (explicit !== void 0 && explicit !== chosen) notices.push(`请求的「${explicit.name}」${why(explicit)}，做不了这次调用，已自动改用「${chosen.name}」。`);
+	if (explicit === void 0 && pinned !== void 0 && pinned !== chosen) notices.push(`胶囊里的「${pinned.name}」${why(pinned)}，做不了这次调用，已自动改用「${chosen.name}」。`);
+	return {
+		workflow: chosen,
+		baseModel: comfyUIBaseModel(chosen.json),
+		notice: notices.length === 0 ? void 0 : notices.join(" ")
+	};
 }
 function selectComfyUIWorkflow(active, requested) {"""
 
 PATCHES_INDEX = [
-    # 1. 胶囊优先：pinActiveWorkflow 打开时忽略调用方传的 workflow
-    (
-        '\tif (typeof requested !== "string" || requested.trim().length === 0) return active.workflow;',
-        '\tif (active.pinActiveWorkflow === true) return active.workflow;\n'
-        '\tif (typeof requested !== "string" || requested.trim().length === 0) return active.workflow;',
-        "if (active.pinActiveWorkflow === true) return active.workflow;",
-    ),
-    # 2. 把开关读进 comfyui provider 描述
-    (
-        "\t\t\t\tworkflows,\n\t\t\t\t...workflow === void 0 ? {} : { workflow },\n\t\t\t\ttimeoutMs: config.comfyuiTimeoutMs ?? 3e5",
-        "\t\t\t\tworkflows,\n\t\t\t\t...workflow === void 0 ? {} : { workflow },\n"
-        "\t\t\t\tpinActiveWorkflow: config.comfyuiPinActiveWorkflow !== false,\n"
-        "\t\t\t\ttimeoutMs: config.comfyuiTimeoutMs ?? 3e5",
-        "pinActiveWorkflow: config.comfyuiPinActiveWorkflow !== false,",
-    ),
-    # 3. 插入两个 helper（原文保持不动，只在前面加）
+    # 1. 插入两个 helper（原文保持不动，只在前面加）
     (
         "function selectComfyUIWorkflow(active, requested) {",
         HELPERS,
         "function comfyUIResolveWorkflow(active, args, sourceImages) {",
     ),
-    # 4. 文生图调用点
+    # 2. 文生图调用点
     (
-        "\t\t\tconst workflow = selectComfyUIWorkflow(active, args.workflow);\n"
+        '\t\t\tconst workflow = selectComfyUIWorkflow(active, args.workflow);\n'
         "\t\t\tconst slots = comfyUIWorkflowSlots(workflow.json);\n"
         "\t\t\tassertImageCount(slots.images, 0);",
         "\t\t\tconst resolved = comfyUIResolveWorkflow(active, args, 0);\n"
@@ -121,7 +128,7 @@ PATCHES_INDEX = [
         "\t\t\tassertImageCount(slots.images, 0);",
         "const resolved = comfyUIResolveWorkflow(active, args, 0);",
     ),
-    # 5. 改图调用点
+    # 3. 改图调用点
     (
         "\t\t\t\tconst workflow = selectComfyUIWorkflow(active, args.workflow);\n"
         "\t\t\t\tconst slots = comfyUIWorkflowSlots(workflow.json);\n"
@@ -132,20 +139,20 @@ PATCHES_INDEX = [
         "\t\t\t\tassertImageCount(slots.images, sourceImages.length);",
         "const resolved = comfyUIResolveWorkflow(active, args, sourceImages.length);",
     ),
-    # 6. 两处 saveGenerated 的 output 换成真实底模
+    # 4. 两处 saveGenerated 的 output 换成真实底模
     (
         'active.provider, workflow.name, "API workflow", current(), exec, knownWorkspaceRoots)',
         'active.provider, workflow.name, resolved.baseModel ?? "API workflow", current(), exec, knownWorkspaceRoots)',
         'resolved.baseModel ?? "API workflow"',
     ),
-    # 7. 文生图 notice 合并
+    # 5. 文生图 notice 合并
     (
         "\t\t\treturn frame.notice === void 0 ? value : {\n\t\t\t\t...value,\n\t\t\t\tnotice: frame.notice\n\t\t\t};",
         "\t\t\tconst notice = [resolved.notice, frame.notice].filter((entry) => typeof entry === \"string\" && entry.length > 0).join(\" \");\n"
         "\t\t\treturn notice.length === 0 ? value : {\n\t\t\t\t...value,\n\t\t\t\tnotice\n\t\t\t};",
         "\t\t\tconst notice = [resolved.notice, frame.notice]",
     ),
-    # 8. 改图 notice 合并
+    # 6. 改图 notice 合并
     (
         "\t\t\t\treturn frame.notice === void 0 ? value : {\n\t\t\t\t\t...value,\n\t\t\t\t\tnotice: frame.notice\n\t\t\t\t};",
         "\t\t\t\tconst notice = [resolved.notice, frame.notice].filter((entry) => typeof entry === \"string\" && entry.length > 0).join(\" \");\n"

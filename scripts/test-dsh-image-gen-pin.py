@@ -8,6 +8,7 @@ node 找不到时退回 PATH 里的 node。
 import glob
 import json
 import os
+import pathlib
 import shutil
 import subprocess
 import sys
@@ -91,7 +92,7 @@ def main():
         return 1
     print(f"抽出被测模块: {tmp_mod} ({os.path.getsize(tmp_mod)} B)")
 
-    mod_url = "file:///" + tmp_mod.replace("\\", "/")
+    mod_url = pathlib.Path(tmp_mod).as_uri()
     runner = r"""
 import { comfyUIBaseModel, comfyUIResolveWorkflow } from "__MOD_URL__";
 
@@ -106,50 +107,55 @@ const t2i = mk("RealVisXL-V5", "RealVisXL_V5.0_fp16.safetensors", 0);
 const edit = mk("RealVisXL-V5-Edit", "RealVisXL_V5.0_fp16.safetensors", 1);
 const faceid = mk("Juggernaut-XI-FaceID", "Juggernaut-XI-v11_fp16.safetensors", 1);
 const gguf = { name: "FLUX-Krea", json: JSON.stringify({ "1": { class_type: "UnetLoaderGGUF", inputs: { unet_name: "flux1-krea-dev-Q2_K.gguf" } } }) };
+const ggufEdit = { name: "FLUX-Krea-Edit", json: JSON.stringify({ "1": { class_type: "UnetLoaderGGUF", inputs: { unet_name: "flux1-krea-dev-Q2_K.gguf" } }, "4": { class_type: "LoadImage", inputs: { image: "{{image}}" } } }) };
 
-const mkActive = (activeName, pin) => ({
+const mkActive = (activeName) => ({
   workflow: [t2i, edit, faceid, gguf].find((w) => w.name === activeName),
-  workflows: [t2i, edit, faceid, gguf],
-  pinActiveWorkflow: pin,
+  workflows: [gguf, ggufEdit, faceid, t2i, edit],
 });
 
 let pass = 0, fail = 0;
 const ok = (label, cond, extra = "") => { cond ? pass++ : fail++; console.log(`${cond ? "PASS" : "FAIL"}  ${label}${cond ? "" : "  << " + extra}`); };
 const run = (active, args, n) => { try { return { value: comfyUIResolveWorkflow(active, args, n) }; } catch (e) { return { error: e.message }; } };
 
-// 1. pin 开：胶囊选 t2i，调用方硬塞 edit → 用 t2i
+// 1. 显式请求可行 → 直接用，不提示
 {
-  const r = run(mkActive("RealVisXL-V5", true), { workflow: "RealVisXL-V5-Edit" }, 0);
-  ok("pin=on 忽略调用方 workflow", r.value && r.value.workflow.name === "RealVisXL-V5", JSON.stringify(r));
-  ok("被忽略时给 notice", r.value && typeof r.value.notice === "string" && r.value.notice.includes("RealVisXL-V5-Edit"), JSON.stringify(r.value && r.value.notice));
+  const r = run(mkActive("RealVisXL-V5"), { workflow: "RealVisXL-V5-Edit" }, 1);
+  ok("显式请求可行直接用", r.value && r.value.workflow.name === "RealVisXL-V5-Edit", JSON.stringify(r));
+  ok("无多余 notice", r.value && r.value.notice === void 0, String(r.value && r.value.notice));
 }
-// 2. pin 开：胶囊选 edit，做文生图 → 中文报错并给出最接近项
+// 2. 显式请求不可行（t2i 做改图）→ 自动退到 edit，不报错
 {
-  const r = run(mkActive("RealVisXL-V5-Edit", true), {}, 0);
-  ok("胶囊 -Edit 做文生图报错", !!r.error, JSON.stringify(r));
-  ok("报错含胶囊工作流名", r.error && r.error.includes("RealVisXL-V5-Edit"), r.error);
-  ok("报错含最接近建议", r.error && r.error.includes("最接近的是「RealVisXL-V5」"), r.error);
+  const r = run(mkActive("RealVisXL-V5"), { workflow: "RealVisXL-V5" }, 1);
+  ok("t2i 请求做改图自动改道", r.value && r.value.workflow.name === "RealVisXL-V5-Edit", JSON.stringify(r));
+  ok("改道给 notice", r.value && typeof r.value.notice === "string" && r.value.notice.includes("RealVisXL-V5"), String(r.value && r.value.notice));
 }
-// 3. pin 开：胶囊选 t2i，传参考图 → 报错
+// 3. 胶囊是 -Edit 但做文生图 → 自动退到 t2i，不报错
 {
-  const r = run(mkActive("RealVisXL-V5", true), {}, 1);
-  ok("胶囊 t2i 做改图报错", !!r.error && r.error.includes("做不了 edit_image"), r.error);
-  ok("建议换成 -Edit", r.error && r.error.includes("最接近的是「RealVisXL-V5-Edit」"), r.error);
+  const r = run(mkActive("RealVisXL-V5-Edit"), {}, 0);
+  ok("胶囊 -Edit 做文生图自动改道", r.value && r.value.workflow.name === "RealVisXL-V5", JSON.stringify(r));
+  ok("提示胶囊不适用", r.value && typeof r.value.notice === "string" && r.value.notice.includes("胶囊"), String(r.value && r.value.notice));
 }
-// 4. pin 开：胶囊选 edit，传参考图 → 放行
+// 4. 胶囊 t2i 但传参考图 → 自动退到 edit
 {
-  const r = run(mkActive("RealVisXL-V5-Edit", true), {}, 1);
-  ok("胶囊 -Edit 改图放行", r.value && r.value.workflow.name === "RealVisXL-V5-Edit", JSON.stringify(r));
+  const r = run(mkActive("RealVisXL-V5"), {}, 1);
+  ok("胶囊 t2i 做改图自动改道", r.value && r.value.workflow.name === "RealVisXL-V5-Edit", JSON.stringify(r));
 }
-// 5. 参考图张数不符
+// 4b. 同底模优先：RealVisXL 的 t2i 请求做改图 → 必须出 RealVisXL-V5-Edit，不能跳去 FLUX/Juggernaut
 {
-  const r = run({ ...mkActive("RealVisXL-V5-Edit", true), workflows: [t2i, edit] }, {}, 2);
-  ok("张数不符报错", !!r.error && r.error.includes("2 张参考图"), r.error);
+  const r = run(mkActive("FLUX-Krea"), { workflow: "RealVisXL-V5" }, 1);
+  ok("同底模兄弟优先", r.value && r.value.workflow.name === "RealVisXL-V5-Edit", JSON.stringify(r));
+  ok("不跳到异底模", r.value && r.value.baseModel !== "flux1-krea-dev-Q2_K.gguf", String(r.value && r.value.baseModel));
 }
-// 6. pin 关：调用方指定仍生效（向后兼容）
+// 5. 胶囊 = Undress 型（1 image）传 2 张图 → 退到能吃的（这里全不行 → 报错）
 {
-  const r = run(mkActive("RealVisXL-V5", false), { workflow: "Juggernaut-XI-FaceID" }, 1);
-  ok("pin=off 保留旧行为", r.value && r.value.workflow.name === "Juggernaut-XI-FaceID", JSON.stringify(r));
+  const r = run({ ...mkActive("RealVisXL-V5-Edit"), workflows: [t2i, edit, faceid] }, {}, 2);
+  ok("无可用工作流才报错", !!r.error && r.error.includes("没有能干这次调用的工作流"), r.error);
+}
+// 6. 显式请求不存在 → 退到胶囊可用的
+{
+  const r = run(mkActive("RealVisXL-V5"), { workflow: "不存在的工作流" }, 0);
+  ok("请求不存在时退回胶囊", r.value && r.value.workflow.name === "RealVisXL-V5", JSON.stringify(r));
 }
 // 7. 底模提取
 {
@@ -159,7 +165,7 @@ const run = (active, args, n) => { try { return { value: comfyUIResolveWorkflow(
   ok("非法 JSON 不抛", comfyUIBaseModel("{不是 json") === void 0, "should be undefined");
 }
 
-console.log(`\n${pass} passed, ${fail} failed`);
+console.log(`${pass} passed, ${fail} failed`);
 process.exit(fail === 0 ? 0 : 1);
 """
     tmp_run = os.path.join(WORK, "_pin_test.mjs")

@@ -58,8 +58,8 @@
         "4",
         0
       ],
-      "weight": 0.85,
-      "weight_faceidv2": 1.0,
+      "weight": 0.8,
+      "weight_faceidv2": 1.2,
       "weight_type": "linear",
       "combine_embeds": "concat",
       "start_at": 0.0,

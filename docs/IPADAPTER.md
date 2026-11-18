@@ -68,14 +68,18 @@ bash scripts/fetch_parts.sh "https://github.com/deepinsight/insightface/releases
 
 | 参数 | 甜点 | 说明 |
 |---|---|---|
-| `weight` | **0.85** | FaceID 下 0.8–0.9 脸最稳；1.0 开始五官会僵 |
-| `weight_faceidv2` | **1.0** | 只在 PLUS V2 生效，调脸的五官还原度 |
+| `weight` | **0.8** | FaceID 下 0.8–0.9 脸最稳；1.0 开始五官会僵 |
+| `weight_faceidv2` | **1.2** | 只在 PLUS V2 生效，调脸的五官还原度。1.0 遇到冲突 prompt 会丢身份 |
 | `lora_strength` | **0.6** | 作者默认；>0.8 皮肤会变塑料 |
 | `weight_type` | `linear` | 其它档位在 FaceID 下差异很小 |
 | `embeds_scaling` | `V only` | FaceID 用 V only；PLUS 才需要 `K+V w/ C penalty` |
 | `provider` | **CPU** | 8 GB 卡上别用 CUDA，onnxruntime 抢显存会把 SDXL 挤到 dynamic loading |
 | `steps` / `cfg` | 30 / 5 | 跟写实底模基线一致 |
 | `denoise` | 1.0 | 换装是重绘，不是图生图 |
+
+`weight_faceidv2` 是最容易被低估的一个。它的作用是把 `weight` 分给「insightface 的 512 维身份向量」和「CLIP ViT-H 的整图特征」两路，值越高身份向量占比越大。写 1.0 时只要 prompt 里出现跟参考图冲突的描述（换人种、换年龄、换风格），身份就会被文本压过去——实测写 `portrait of a young East Asian woman` 配一张欧裔参考图，1.0 出的是东亚脸，1.2 出的是参考图那个人。**默认 1.2**，只有发现五官过僵（下颌线变方、眼睛变直）才往 1.0 降。
+
+`presetPrompt` 不该写死构图。早期三条 FaceID 工作流的 preset 是 `portrait of a person ... detailed face`，结果任何调用都被压成证件照——prompt 里写「全身站在天台穿墨绿长裙」也照样出一张灰底白 T 的胸像。现在改成中性的 `RAW photo, photorealistic, natural skin texture, sharp focus`，构图完全交给调用方的 prompt。**写自己的 FaceID 工作流时别在 preset 里放 `portrait` / `close-up` / `headshot`。**
 
 PLUS 的参数（如果非要用）：`weight 0.35–0.45` + `linear` + `K+V w/ C penalty` + `PrepImageForClipVision(crop="pad")`。weight ≥ 0.55 会把 patch 特征当纹理糊进画面。
 
@@ -116,23 +120,32 @@ FaceID 同样能锁住，但产出的脸会往写实方向走——因为身份�
 | `Juggernaut-XI-FaceID` | Juggernaut-XI-v11_fp16 | 商业/电影档 |
 | `Juggernaut-XI-FaceID-HiRes` | Juggernaut-XI-v11_fp16 | 同上 + 1.5× 二次采样，1248×1824 |
 
+三条都用 `weight 0.8 / weight_faceidv2 1.2 / lora_strength 0.6 / V only / CPU`，preset 都是中性串，构图交给调用方。
+
 用 `edit_image` 时显式指定：
 
 ```
 edit_image({
-  prompt: "RAW photo, portrait of a young woman, wearing a beige linen blazer ...",
+  prompt: "full body shot of the same woman standing on a rooftop at dusk, wearing a dark green long dress, wind in her hair, city skyline behind, golden hour rim light",
   source_path: "ComfyUI-0.45.0/input/REF.png",
   workflow: "RealVisXL-V5-FaceID",
-  size: "832x1216"
+  aspect_ratio: "2:3"
 })
 ```
 
 注意 `{{image}}` 只接 1 张；传 2 张会报
 `ComfyUI workflow has 1 {{image}} image input(s) but this call has 2 source image(s)`。
 
-这些工作流都吃 `{{width}}` / `{{height}}`，`size` 参数有效。但胶囊里的选择优先于
-`workflow:` 参数（见仓库根目录 README 的「胶囊选什么，就一定出什么」一节），
-想换工作流要在输入栏胶囊里改。
+这些工作流都吃 `{{width}}` / `{{height}}`，`size` / `aspect_ratio` 有效。
+
+**选错工作流不再失败**：传的工作流形状不对（文生图撞上带 `{{image}}` 的、改图撞上不带 `{{image}}` 的）时，插件按「显式请求 → 同底模兄弟 → 同族兄弟 → 胶囊 → 其余」顺序自动换成能干的，并在结果里带一句中文 notice 说明换成了哪条、为什么。只有一条能干的都没有才报错。所以写 `workflow: "RealVisXL-V5"` 去做改图，会**自动落到 `RealVisXL-V5-Edit`**，不会跳到 FLUX 或 Juggernaut。
+
+改图有强弱两档，按改动幅度选：
+
+| 工作流 | denoise | 适合 |
+|---|---|---|
+| `RealVisXL-V5-Edit` | 0.55 | 换光、换表情、局部微调、保留原构图与服装 |
+| `RealVisXL-V5-Rework` | 0.85 | 换场景、换服装、换姿态等大改，原构图会重画 |
 
 ---
 

@@ -1,9 +1,9 @@
 # comfyui-dsh — local image generation, ComfyUI + DeepSeek Harness
 
 [![DSH target](https://img.shields.io/badge/DeepSeek%20Harness-0.2.2--rc.3-4f46e5)](docs/COMPATIBILITY.md)
-[![version](https://img.shields.io/badge/version-1.3.1-16a34a)](https://github.com/devin667/comfyui-dsh/releases/tag/v1.3.1)
+[![version](https://img.shields.io/badge/version-1.4.0-16a34a)](https://github.com/devin667/comfyui-dsh/releases/tag/v1.4.0)
 [![checkpoints](https://img.shields.io/badge/checkpoints-4-0ea5e9)](docs/MODELS.md)
-[![workflows](https://img.shields.io/badge/workflows-13-8b5cf6)](dsh/workflows)
+[![workflows](https://img.shields.io/badge/workflows-15-8b5cf6)](dsh/workflows)
 [![license](https://img.shields.io/badge/license-MIT-a3a3a3)](LICENSE)
 [![platform](https://img.shields.io/badge/platform-Windows%20%2F%20RTX%2050-f97316)](docs/COMPATIBILITY.md)
 
@@ -199,30 +199,38 @@ It edits the profile's `cordis.patch.yml`, which is watched by HMR — **changes
 effect in about fifteen seconds, no DSH restart needed**. Details in
 [plugin/README.md](plugin/README.md).
 
-### What the capsule says is what you get
+### A wrong workflow pick never wastes a run
 
-Stock `dsh-image-gen` treats the workflow picked in the composer capsule as a **default only** —
-the moment the agent passes `workflow: "..."` in the tool call, that wins, and you get
-"I picked A, B came out". The result card also just says `API workflow`, so you cannot audit it later.
+Stock `dsh-image-gen` is rigid: pass `workflow: "..."` and that exact entry runs; if its shape
+does not fit the call (a text-to-image request against a `{{image}}` workflow, or the reverse)
+it throws and the whole run is lost. The result card also just says `API workflow`, so you
+cannot audit it later.
 
-`scripts/patch-dsh-image-gen.py` fixes three things (idempotent, `--revert` restores):
+`scripts/patch-dsh-image-gen.py` changes this (idempotent, `--revert` restores):
 
 | Change | Effect |
 |---|---|
-| Capsule wins | The capsule selection can no longer be overridden by call arguments; when a call argument is ignored the result carries a note saying so |
-| Mode validation | Capsule on `-Edit` but `generate_image` called (or the reverse), or source-image count mismatch → throws a Chinese error naming the closest alternative |
+| Auto-pick a workflow that fits | Tries ``explicit request → its same-checkpoint siblings → same-family siblings → capsule → the rest``, takes the first one whose shape fits, and adds a notice saying which one it swapped to and why; only throws when nothing at all fits |
 | Checkpoint on the card | Reads `CheckpointLoaderSimple.ckpt_name` / `UnetLoaderGGUF.unet_name` from the workflow JSON and shows the real checkpoint next to the card title |
+| Size on the card | Shows the **real pixel size** of the generated image, no longer blank for non-`import` sources |
+
+For example `generate_image` with `workflow: "RealVisXL-V5-Edit"` silently becomes `RealVisXL-V5`
+with the notice ``请求的「RealVisXL-V5-Edit」有 1 个 {{image}} 输入（文生图要求 0 个），做不了这次调用，已自动改用「RealVisXL-V5」。``
+And `edit_image` with `workflow: "RealVisXL-V5"` lands on `RealVisXL-V5-Edit` — **same checkpoint
+first**, never jumping to FLUX or Juggernaut.
 
 ```powershell
 python .\scripts\patch-dsh-image-gen.py --check   # see what would change
 python .\scripts\patch-dsh-image-gen.py           # apply
+python .\scripts\test-dsh-image-gen-pin.py        # 15 assertions, no DSH runtime needed
 ```
 
 **The plugin must be reloaded** (toggle `dsh-image-gen` off and on in `plugin_manager`);
 editing the file alone does nothing — the text is swapped but the runtime still holds the
 old code, and errors still come out in the old English wording.
 
-Set `comfyuiPinActiveWorkflow: false` to restore the original call-argument-wins behaviour.
+**A plugin upgrade silently overwrites the patch** (the `node_modules` tree is reinstalled);
+re-run the script if behaviour regresses after an upgrade.
 
 ### Auditing: which checkpoint actually drew this
 
@@ -455,6 +463,7 @@ part's byte count, and the file magic number.
 | v1.2.2 (2026-11-17) | same (no browser by default, `-open` to open one) | same | same |
 | **v1.3.0 (2026-11-17)** | same (IPAdapter FaceID identity lock + 2 workflows) | same | same |
 | **v1.3.1 (2026-11-18)** | same (capsule-wins patch, checkpoint on the card, 13 workflows, audit script) | same | same |
+| **v1.4.0 (2026-11-19)** | same (auto-recovery on a wrong workflow pick, FaceID weight fix, Rework workflow, Undress prompt de-conflict) | same | same |
 
 Per-change details in **[CHANGELOG.md](CHANGELOG.md)**.
 

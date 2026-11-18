@@ -16,6 +16,37 @@
 
 ---
 
+## [1.4.0] — 2026-11-19
+
+### 新增
+
+- `RealVisXL-V5-Rework` 工作流：抄 `RealVisXL-V5-Edit`，`denoise 0.55 → 0.85`、`steps 28 → 32`。用途是换场景 / 换服装 / 换姿态等大改 —— `-Edit` 的 0.55 只能换光换表情，大改会被压回原构图。共 15 条工作流。
+- `Undress-Inpaint` 工作流入库（此前只在本地 profile 里，仓库没有源文件）。
+
+### 变更
+
+- **`patch-dsh-image-gen.py` 语义重写**：从「胶囊绝对优先、不匹配就报错」改成「永不让调用白跑」。
+  - 去掉 `pinActiveWorkflow` —— 它让胶囊的选择压过一切，agent 无法自行解除（胶囊只有 UI 能点），把 agent 逼去绕开插件直接打 `/prompt`，旁路掉 `saveGenerated`，`output` 与修订链全部丢失。
+  - 新的 `comfyUIResolveWorkflow(active, args, sourceImages)` 候选顺序：**显式请求 → 它的同底模兄弟（`ckpt_name`/`unet_name` 相同）→ 同族兄弟（去掉 `-(Edit|HiRes|FaceID|Inpaint)` 后缀同名）→ 胶囊 → 胶囊的兄弟 → 其余全部**，取第一条 `fits()` 通过的。`fits()`：改图时 `slots.images === sourceImages`，文生图时 `slots.images === 0`。
+  - 改道时给中文 notice：`请求的「X」N 个 {{image}} 输入，做不了这次调用，已自动改用「Y」。` / `胶囊里的「X」…`。一条能干的都没有才抛 `没有能干这次调用的工作流：…`。
+  - 同底模优先是必须的：第一版按列表顺序退回，`edit_image` 传 `RealVisXL-V5` 时跳到了 `FLUX-Krea-Edit`（异底模），画质与身份全崩。
+- **FaceID 三条工作流的 `weight_faceidv2` 从 1.0 提到 1.2，`weight` 从 0.85 降到 0.8**。1.0 时只要 prompt 与参考图冲突（换人种/年龄/风格）身份就被文本压过去 —— 实测参考图为欧裔、prompt 写 `portrait of a young East Asian woman`，1.0 出东亚脸，1.2 出参考图那个人。
+- **FaceID 三条工作流的 `presetPrompt` 改成中性串**。原来是 `portrait of a person ... detailed face`，导致任何调用都被压成证件照：prompt 写「全身站在天台穿墨绿长裙」，出的是灰底白 T 胸像。现在 preset 只有 `RAW photo, photorealistic, natural skin texture, sharp focus`，构图交给调用方。
+- **`Undress-Inpaint` 提示词去自我冲突**：正向删掉 `fair pale skin / very light skin tone / porcelain skin`（与「同肤色」矛盾）；负向删掉 `underwear, bra, panties`（与正向语义打架）和整簇 `tan skin, dark skin, brown skin, olive skin, sun tanned, tanned body`（会把深肤色一律推向浅肤色），只留 `sunburn, tan lines, two-tone skin, dark neck, uneven skin tone`。
+
+### 修复
+
+- `patch-dsh-image-gen.py` 的幂等性：第 1、3 条补丁的锚点打完后仍在文本里，二次运行会重复插入。现在每条带 `guard` 串，已应用就跳过，`--check` 输出 `0 条已应用, changed=False`。
+- `test-dsh-image-gen-pin.py` 的模块路径：`"file:///" + path.replace("\\","/")` 在 Windows 上反斜杠被吃掉，报 `ERR_MODULE_NOT_FOUND: Cannot find module 'C:UsersdevinAppDataLocalTemp...'`。改用 `pathlib.Path(tmp_mod).as_uri()`。
+- 两个脚本都 `sys.stdout.reconfigure(encoding="utf-8", errors="replace")`，修 GBK 控制台乱码。
+
+### 已知问题
+
+- 插件升级会静默覆盖补丁（`node_modules` 被重装），升级后发现行为回退就重跑 `scripts/patch-dsh-image-gen.py`。
+- `lib/yaml-store.js` 的 `writeImageGenConfig` 用 `/^ {0,4}\S/` 判断 `comfyuiWorkflows` 块结束，多行 JSON 会被误判成块边界导致 YAML 解析失败。工作流 JSON 必须压成单行再写入；仓库里的源文件仍保持 pretty 格式。
+
+---
+
 ## [1.3.1] — 2026-11-18
 
 ### 新增
@@ -321,7 +352,8 @@ README 从纯文字改成图文页。补上 banner、四张实测截图，中英
 | v1.1.0 | + RealVisXL V5 / Juggernaut XI / FLUX Krea | `--cache-lru 8 --reserve-vram 0.3` | 15–33 GB |
 | v1.1.1 | 同上（纯文档） | 同上 | 同上 |
 
-[未发布]: https://github.com/devin667/comfyui-dsh/compare/v1.3.1...HEAD
+[未发布]: https://github.com/devin667/comfyui-dsh/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/devin667/comfyui-dsh/compare/v1.3.1...v1.4.0
 [1.3.1]: https://github.com/devin667/comfyui-dsh/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/devin667/comfyui-dsh/compare/v1.2.2...v1.3.0
 [1.2.2]: https://github.com/devin667/comfyui-dsh/compare/v1.2.1...v1.2.2
