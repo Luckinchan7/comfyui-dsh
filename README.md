@@ -1,7 +1,7 @@
 # comfyui-dsh — 本地生图，ComfyUI + DeepSeek Harness
 
 [![DSH target](https://img.shields.io/badge/DeepSeek%20Harness-0.2.2--rc.3-4f46e5)](docs/COMPATIBILITY.md)
-[![version](https://img.shields.io/badge/version-1.4.3-16a34a)](https://github.com/devin667/comfyui-dsh/releases/tag/v1.4.3)
+[![version](https://img.shields.io/badge/version-1.4.4-16a34a)](https://github.com/devin667/comfyui-dsh/releases/tag/v1.4.4)
 [![checkpoints](https://img.shields.io/badge/checkpoints-4-0ea5e9)](docs/MODELS.md)
 [![workflows](https://img.shields.io/badge/workflows-15-8b5cf6)](dsh/workflows)
 [![license](https://img.shields.io/badge/license-MIT-a3a3a3)](LICENSE)
@@ -215,7 +215,8 @@ python .\scripts\fix-comfy-models-schema.py   # 修（幂等，自动备份）
 
 | 改动 | 效果 |
 |---|---|
-| 自动选对工作流 | 传的不合适就按「显式请求 → 同底模兄弟 → 同族兄弟 → 胶囊 → 其余」换成能干的，结果里带一句中文 notice 说明换成了哪条、为什么；一条能干的都没有才报错 |
+| 胶囊说了算 | 输入栏胶囊选的那条只要形状能胜任（文生图要 0 个 `{{image}}`、改图要恰好 N 个），就一定用它 —— 调用里传的 `workflow` 一律让位，并附一句中文 notice 说明「忽略了谁」 |
+| 自动选对工作流 | 胶囊不胜任时才退让：先看调用里显式请求的那条能不能干，再按「同底模兄弟 → 同族兄弟 → 其余」找最接近的，结果里带 notice 说明换成了哪条、为什么；一条能干的都没有才报错 |
 | 底模上卡 | 从工作流 JSON 里读 `CheckpointLoaderSimple.ckpt_name` / `UnetLoaderGGUF.unet_name`，卡片标题旁显示真实底模 |
 | 尺寸上卡 | 卡片显示生成图的**真实像素**，不再对非 `import` 来源留空 |
 
@@ -223,15 +224,20 @@ python .\scripts\fix-comfy-models-schema.py   # 修（幂等，自动备份）
 插了一个 `ImageScale`（`lanczos` + `crop: center`），`edit_image` 传 `size` / `aspect_ratio`
 会真的生效；比例与原图不同时按目标比例裁边，想保原构图就不传。
 
-举例：`generate_image` 传了 `workflow: "RealVisXL-V5-Edit"`，自动改用 `RealVisXL-V5`，
-notice 写「请求的「RealVisXL-V5-Edit」有 1 个 `{{image}}` 输入（文生图要求 0 个），做不了这次调用，已自动改用「RealVisXL-V5」。」
-反过来 `edit_image` 传 `workflow: "RealVisXL-V5"` 会落到 `RealVisXL-V5-Edit` ——
-**同底模优先**，不会跳到 FLUX 或 Juggernaut 去。
+举例（胶囊 = `RealVisXL-V5`）：
+
+- `generate_image` 传了 `workflow: "Juggernaut-XI"` → **仍然用 `RealVisXL-V5`**，
+  notice 写「已按输入栏胶囊里选的「RealVisXL-V5」出图，忽略了调用方请求的「Juggernaut-XI」。要换工作流请直接在胶囊里改。」
+- `edit_image` 传了 `workflow: "Juggernaut-XI-Edit"` → 胶囊是文生图、做不了改图，
+  于是落到**调用里请求的那条** `Juggernaut-XI-Edit`，notice 说明胶囊不胜任。
+- `edit_image` 不传 `workflow`、胶囊是 `RealVisXL-V5-Edit` → 用胶囊。
+
+一句话：**胶囊能胜任就以胶囊为准；胶囊不胜任时才按请求走，且一定告诉你换成了哪条。**
 
 ```powershell
 python .\scripts\patch-dsh-image-gen.py --check   # 先看会改哪几处
 python .\scripts\patch-dsh-image-gen.py           # 打补丁
-python .\scripts\test-dsh-image-gen-pin.py        # 15 条断言，不碰 DSH 运行时
+python .\scripts\test-dsh-image-gen-pin.py        # 17 条断言，不碰 DSH 运行时
 ```
 
 **改完必须重载插件**（`plugin_manager` 里关掉 `dsh-image-gen` 再打开），光改文件不生效 ——
@@ -439,6 +445,7 @@ hf-mirror 被限流时会把报错页当正文写进文件，大小完全吻合�
 | **v1.4.1（2026-11-19）** | 同上（五条改图工作流补上 `size` / `aspect_ratio` 支持，15 条全部吃尺寸） | 同上 | 同上 |
 | **v1.4.2（2026-11-20）** | 同上（修 `dsh-comfy-models` 三个工具的畸形 schema —— 它让 Trae 通道整条请求 400） | 同上 | 同上 |
 | **v1.4.3（2026-11-20）** | 同上（FLUX 去斑：presetPrompt 改写 + 四底模对比图换新 + MODELS.md 补八组对照） | 同上 | 同上 |
+| **v1.4.4（2026-11-20）** | 同上（胶囊重新成为唯一权威：选什么就出什么，胶囊不胜任才让位给调用参数） | 同上 | 同上 |
 
 逐条变更见 **[CHANGELOG.md](CHANGELOG.md)**。
 

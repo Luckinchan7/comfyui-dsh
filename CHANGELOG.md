@@ -6,6 +6,34 @@
 
 ---
 
+## [1.4.4] — 2026-11-20
+
+### 修复
+
+- **胶囊选的模型又被调用参数盖掉了**。v1.4.0 为了「不让调用白跑」，把优先级写成
+  「显式请求 → 同底模兄弟 → 同族兄弟 → 胶囊 → 其余」。副作用是：界面上胶囊明明选了
+  `RealVisXL-V5`，只要工具调用里带了 `workflow: "..."`，出来的就是别的模型 —— 用户看到的
+  「我选的这个模型，为什么出的图不是它」就是这个。
+  新顺序把权威还给胶囊：**胶囊能胜任就以胶囊为准**（文生图要 0 个 `{{image}}`、改图要恰好 N 个），
+  调用里传的 `workflow` 一律让位并附一句 notice 说明忽略了谁；**只有胶囊胜任不了这次调用时**，
+  才轮到显式请求，再不行才按「同底模兄弟 → 同族兄弟 → 其余」改道。一条能干的都没有才报错。
+
+### 变更
+
+- `scripts/test-dsh-image-gen-pin.py` 断言从 15 条扩到 17 条，新增「胶囊能胜任时压过显式请求」、
+  「胶囊 = 请求时不重复提示」、「胶囊能胜任直接用、不提示」三条路径；测试输出强制 UTF-8，
+  在 GBK 控制台下不再是乱码。
+- `scripts/patch-dsh-image-gen.py` 的 `HELPERS` 常量改用真正的制表符转义，避免二次修补时
+  把 `\t` 字面量写进 `lib/index.js`（曾造成 `SyntaxError: Invalid or unexpected token`）。
+- README 中英对应段落改用「胶囊说了算 / 胶囊不胜任才退让」两行表格，示例换成胶囊视角。
+
+### 已知问题
+
+- 容器换代（插件升级、重装 `node_modules`）会静默覆盖补丁，行为回退到上游默认 ——
+  升级后重跑 `scripts/patch-dsh-image-gen.py`。
+
+---
+
 ## [1.4.3] — 2026-11-20
 
 ### 修复
@@ -452,7 +480,8 @@ README 从纯文字改成图文页。补上 banner、四张实测截图，中英
 | v1.1.0 | + RealVisXL V5 / Juggernaut XI / FLUX Krea | `--cache-lru 8 --reserve-vram 0.3` | 15–33 GB |
 | v1.1.1 | 同上（纯文档） | 同上 | 同上 |
 
-[未发布]: https://github.com/devin667/comfyui-dsh/compare/v1.4.3...HEAD
+[未发布]: https://github.com/devin667/comfyui-dsh/compare/v1.4.4...HEAD
+[1.4.4]: https://github.com/devin667/comfyui-dsh/compare/v1.4.3...v1.4.4
 [1.4.3]: https://github.com/devin667/comfyui-dsh/compare/v1.4.2...v1.4.3
 [1.4.2]: https://github.com/devin667/comfyui-dsh/compare/v1.4.1...v1.4.2
 [1.4.1]: https://github.com/devin667/comfyui-dsh/compare/v1.4.0...v1.4.1

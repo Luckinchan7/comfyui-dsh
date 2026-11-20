@@ -145,7 +145,9 @@ edit_image({
 把源图先缩放到目标画框再编码 —— 所以 `edit_image` 传 `size` / `aspect_ratio` 会真的生效，
 代价是比例与原图不同时会按目标比例裁掉边缘。想保住原构图就别传尺寸。
 
-**选错工作流不再失败**：传的工作流形状不对（文生图撞上带 `{{image}}` 的、改图撞上不带 `{{image}}` 的）时，插件按「显式请求 → 同底模兄弟 → 同族兄弟 → 胶囊 → 其余」顺序自动换成能干的，并在结果里带一句中文 notice 说明换成了哪条、为什么。只有一条能干的都没有才报错。所以写 `workflow: "RealVisXL-V5"` 去做改图，会**自动落到 `RealVisXL-V5-Edit`**，不会跳到 FLUX 或 Juggernaut。
+**胶囊说了算，选错也不会失败**：输入栏胶囊选的那条只要形状能胜任（文生图要 0 个 `{{image}}`、改图要恰好 N 个），就一定用它，调用里传的 `workflow` 一律让位，并附一句 notice 说明忽略了谁。只有胶囊胜任不了这次调用时（比如胶囊是文生图、这次是 `edit_image`），才轮到显式请求；再不合适就按「同底模兄弟 → 同族兄弟 → 其余」换成能干的，同样带 notice。一条能干的都没有才报错，且不会跳到异底模去。
+
+举例：胶囊 = `RealVisXL-V5`，`edit_image` 里写 `workflow: "RealVisXL-V5"` → 胶囊干不了改图，落到请求的 `RealVisXL-V5-Edit`（同底模）；胶囊 = `RealVisXL-V5-Edit`，`generate_image` 里写 `workflow: "Juggernaut-XI"` → 仍出 `RealVisXL-V5-Edit`，notice 说明忽略了 `Juggernaut-XI`。
 
 改图有强弱两档，按改动幅度选：
 

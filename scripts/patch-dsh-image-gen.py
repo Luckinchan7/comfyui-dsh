@@ -66,47 +66,57 @@ function comfyUIBaseModel(workflowJson) {
 \treturn gguf;
 }
 // [comfyui-pin] 挑一条这次调用真能干的工作流。
-// 顺序：显式请求 → 它的同底模兄弟 → 它的同族兄弟 → 胶囊 → 胶囊的兄弟 → 其余。
-// 一律不因为「选错了」而失败 —— 只有一条能干的都没有时才报错。
+// 铁律：界面上胶囊选了什么，就出什么的图 —— 只要那条能胜任这次调用。
+// 顺序：胶囊（能胜任时绝对优先）→ 显式请求 → 显式请求的同底模兄弟 → 同族兄弟 → 其余。
+// 一律不因为「选错了」而失败：改道一定给中文 notice，只有一条能干的都没有时才报错。
 function comfyUIResolveWorkflow(active, args, sourceImages) {
-	const requested = typeof args.workflow === "string" ? args.workflow.trim() : "";
-	const editing = sourceImages > 0;
-	const fits = (entry) => {
-		const slots = comfyUIWorkflowSlots(entry.json);
-		return editing ? slots.images === sourceImages : slots.images === 0;
-	};
-	const baseOf = (entry) => comfyUIBaseModel(entry.json) ?? "";
-	const familyOf = (name) => name.replace(/-(Edit|HiRes|FaceID|Inpaint)$/g, "");
-	const find = (name) => active.workflows.find((entry) => entry.name === name);
-	const explicit = requested.length > 0 ? find(requested) : void 0;
-	const pinned = active.workflow;
-	const anchor = explicit ?? pinned;
-	const anchorBase = anchor === void 0 ? "" : baseOf(anchor);
-	const anchorFamily = anchor === void 0 ? "" : familyOf(anchor.name);
-	const candidates = [];
-	const push = (entry) => {
-		if (entry !== void 0 && candidates.indexOf(entry) < 0) candidates.push(entry);
-	};
-	push(explicit);
-	for (const entry of active.workflows) if (anchorBase.length > 0 && baseOf(entry) === anchorBase) push(entry);
-	for (const entry of active.workflows) if (anchorFamily.length > 0 && familyOf(entry.name) === anchorFamily) push(entry);
-	push(pinned);
-	for (const entry of active.workflows) push(entry);
-	const chosen = candidates.find(fits);
-	if (chosen === void 0) {
-		const want = editing ? `需要恰好 ${String(sourceImages)} 个 ${COMFYUI_IMAGE_PLACEHOLDER} 输入的工作流` : `需要不含 ${COMFYUI_IMAGE_PLACEHOLDER} 的文生图工作流`;
-		const names = active.workflows.map((entry) => `「${entry.name}」`);
-		throw new Error(`没有能干这次调用的工作流：${want}。当前 ${String(active.workflows.length)} 条都不满足：${names.join("、")}。请先导入一条合适的工作流。`);
-	}
-	const notices = [];
-	const why = (entry) => editing ? `${String(comfyUIWorkflowSlots(entry.json).images)} 个 ${COMFYUI_IMAGE_PLACEHOLDER} 输入` : `不含 ${COMFYUI_IMAGE_PLACEHOLDER}`;
-	if (explicit !== void 0 && explicit !== chosen) notices.push(`请求的「${explicit.name}」${why(explicit)}，做不了这次调用，已自动改用「${chosen.name}」。`);
-	if (explicit === void 0 && pinned !== void 0 && pinned !== chosen) notices.push(`胶囊里的「${pinned.name}」${why(pinned)}，做不了这次调用，已自动改用「${chosen.name}」。`);
-	return {
-		workflow: chosen,
-		baseModel: comfyUIBaseModel(chosen.json),
-		notice: notices.length === 0 ? void 0 : notices.join(" ")
-	};
+\tconst requested = typeof args.workflow === "string" ? args.workflow.trim() : "";
+\tconst editing = sourceImages > 0;
+\tconst fits = (entry) => {
+\t\tconst slots = comfyUIWorkflowSlots(entry.json);
+\t\treturn editing ? slots.images === sourceImages : slots.images === 0;
+\t};
+\tconst baseOf = (entry) => comfyUIBaseModel(entry.json) ?? "";
+\tconst familyOf = (name) => name.replace(/-(Edit|HiRes|FaceID|Inpaint)$/g, "");
+\tconst find = (name) => active.workflows.find((entry) => entry.name === name);
+\tconst pinned = active.workflow;
+\tconst explicit = requested.length > 0 ? find(requested) : void 0;
+\tconst why = (entry) => editing ? `${String(comfyUIWorkflowSlots(entry.json).images)} 个 ${COMFYUI_IMAGE_PLACEHOLDER} 输入` : `不含 ${COMFYUI_IMAGE_PLACEHOLDER}`;
+\tconst result = (chosen, notice) => ({
+\t\tworkflow: chosen,
+\t\tbaseModel: comfyUIBaseModel(chosen.json),
+\t\tnotice
+\t});
+\t// 1. 胶囊能胜任 —— 用户选什么就给什么，调用方说的都不算。
+\tif (pinned !== void 0 && fits(pinned)) {
+\t\tconst honoured = explicit !== void 0 && explicit !== pinned;
+\t\treturn result(pinned, honoured ? `已按输入栏胶囊里选的「${pinned.name}」出图，忽略了调用方请求的「${explicit.name}」。要换工作流请直接在胶囊里改。` : void 0);
+\t}
+\t// 2. 胶囊不胜任，但显式请求能胜任。
+\tif (explicit !== void 0 && fits(explicit)) {
+\t\treturn result(explicit, pinned === void 0 ? void 0 : `胶囊里的「${pinned.name}」${why(pinned)}，做不了这次调用，已改用「${explicit.name}」。`);
+\t}
+\t// 3. 都不胜任：按兄弟关系找最接近的一条能干的。
+\tconst anchor = explicit ?? pinned;
+\tconst anchorBase = anchor === void 0 ? "" : baseOf(anchor);
+\tconst anchorFamily = anchor === void 0 ? "" : familyOf(anchor.name);
+\tconst candidates = [];
+\tconst push = (entry) => {
+\t\tif (entry !== void 0 && candidates.indexOf(entry) < 0) candidates.push(entry);
+\t};
+\tif (anchorBase.length > 0) for (const entry of active.workflows) if (baseOf(entry) === anchorBase) push(entry);
+\tif (anchorFamily.length > 0) for (const entry of active.workflows) if (familyOf(entry.name) === anchorFamily) push(entry);
+\tfor (const entry of active.workflows) push(entry);
+\tconst chosen = candidates.find(fits);
+\tif (chosen === void 0) {
+\t\tconst want = editing ? `需要恰好 ${String(sourceImages)} 个 ${COMFYUI_IMAGE_PLACEHOLDER} 输入的工作流` : `需要不含 ${COMFYUI_IMAGE_PLACEHOLDER} 的文生图工作流`;
+\t\tconst names = active.workflows.map((entry) => `「${entry.name}」`);
+\t\tthrow new Error(`没有能干这次调用的工作流：${want}。当前 ${String(active.workflows.length)} 条都不满足：${names.join("、")}。请先导入一条合适的工作流。`);
+\t}
+\tconst notices = [];
+\tif (explicit !== void 0 && explicit !== chosen) notices.push(`请求的「${explicit.name}」${why(explicit)}，做不了这次调用，已自动改用「${chosen.name}」。`);
+\tif (explicit === void 0 && pinned !== void 0 && pinned !== chosen) notices.push(`胶囊里的「${pinned.name}」${why(pinned)}，做不了这次调用，已自动改用「${chosen.name}」。`);
+\treturn result(chosen, notices.length === 0 ? void 0 : notices.join(" "));
 }
 function selectComfyUIWorkflow(active, requested) {"""
 

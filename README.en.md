@@ -1,7 +1,7 @@
 # comfyui-dsh — local image generation, ComfyUI + DeepSeek Harness
 
 [![DSH target](https://img.shields.io/badge/DeepSeek%20Harness-0.2.2--rc.3-4f46e5)](docs/COMPATIBILITY.md)
-[![version](https://img.shields.io/badge/version-1.4.3-16a34a)](https://github.com/devin667/comfyui-dsh/releases/tag/v1.4.3)
+[![version](https://img.shields.io/badge/version-1.4.4-16a34a)](https://github.com/devin667/comfyui-dsh/releases/tag/v1.4.4)
 [![checkpoints](https://img.shields.io/badge/checkpoints-4-0ea5e9)](docs/MODELS.md)
 [![workflows](https://img.shields.io/badge/workflows-15-8b5cf6)](dsh/workflows)
 [![license](https://img.shields.io/badge/license-MIT-a3a3a3)](LICENSE)
@@ -210,19 +210,27 @@ cannot audit it later.
 
 | Change | Effect |
 |---|---|
-| Auto-pick a workflow that fits | Tries ``explicit request → its same-checkpoint siblings → same-family siblings → capsule → the rest``, takes the first one whose shape fits, and adds a notice saying which one it swapped to and why; only throws when nothing at all fits |
+| The capsule wins | Whatever the composer capsule has selected is used whenever its shape fits (0 `{{image}}` inputs for text-to-image, exactly N for an edit) — a `workflow` argument is overruled, with a notice naming what was ignored |
+| Auto-pick a workflow that fits | Only when the capsule cannot do the call: the explicitly requested workflow gets its turn, then ``same-checkpoint siblings → same-family siblings → the rest``, first shape that fits, with a notice saying what it swapped to and why; only throws when nothing at all fits |
 | Checkpoint on the card | Reads `CheckpointLoaderSimple.ckpt_name` / `UnetLoaderGGUF.unet_name` from the workflow JSON and shows the real checkpoint next to the card title |
 | Size on the card | Shows the **real pixel size** of the generated image, no longer blank for non-`import` sources |
 
-For example `generate_image` with `workflow: "RealVisXL-V5-Edit"` silently becomes `RealVisXL-V5`
-with the notice ``请求的「RealVisXL-V5-Edit」有 1 个 {{image}} 输入（文生图要求 0 个），做不了这次调用，已自动改用「RealVisXL-V5」。``
-And `edit_image` with `workflow: "RealVisXL-V5"` lands on `RealVisXL-V5-Edit` — **same checkpoint
-first**, never jumping to FLUX or Juggernaut.
+Examples with the capsule set to `RealVisXL-V5`:
+
+- `generate_image` with `workflow: "Juggernaut-XI"` → **still `RealVisXL-V5`**, with the notice
+  ``已按输入栏胶囊里选的「RealVisXL-V5」出图，忽略了调用方请求的「Juggernaut-XI」。要换工作流请直接在胶囊里改。``
+- `edit_image` with `workflow: "Juggernaut-XI-Edit"` → the capsule is text-to-image and cannot
+  edit, so the **explicitly requested** `Juggernaut-XI-Edit` runs, with a notice explaining that
+  the capsule could not do the call.
+- `edit_image` without `workflow` while the capsule is `RealVisXL-V5-Edit` → the capsule runs.
+
+In one line: **when the capsule fits, it wins; when it does not, the request takes over — and
+you are always told which one was swapped.**
 
 ```powershell
 python .\scripts\patch-dsh-image-gen.py --check   # see what would change
 python .\scripts\patch-dsh-image-gen.py           # apply
-python .\scripts\test-dsh-image-gen-pin.py        # 15 assertions, no DSH runtime needed
+python .\scripts\test-dsh-image-gen-pin.py        # 17 assertions, no DSH runtime needed
 ```
 
 **The plugin must be reloaded** (toggle `dsh-image-gen` off and on in `plugin_manager`);
@@ -467,6 +475,7 @@ part's byte count, and the file magic number.
 | **v1.4.1 (2026-11-19)** | same (all five image-editing workflows now honour `size` / `aspect_ratio`; all 15 workflows take a frame size) | same | same |
 | **v1.4.2 (2026-11-20)** | same (fix the malformed tool schemas in `dsh-comfy-models` that made Trae reject the whole request with 400) | same | same |
 | **v1.4.3 (2026-11-20)** | same (FLUX spot removal: presetPrompt rewrite, refreshed 4-way comparison image, eight-variant table in MODELS.md) | same | same |
+| **v1.4.4 (2026-11-20)** | same (the capsule is authoritative again: what you pick is what runs; a request only takes over when the capsule cannot do the call) | same | same |
 
 Per-change details in **[CHANGELOG.md](CHANGELOG.md)**.
 

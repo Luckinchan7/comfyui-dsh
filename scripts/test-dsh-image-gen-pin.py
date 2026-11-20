@@ -82,6 +82,11 @@ fs.writeFileSync(process.argv[3], code, "utf8");
 
 
 def main():
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
     tmp_harness = os.path.join(WORK, "_mk_harness.mjs")
     tmp_mod = os.path.join(WORK, "_pin_under_test.mjs")
     with open(tmp_harness, "w", encoding="utf-8") as f:
@@ -118,11 +123,21 @@ let pass = 0, fail = 0;
 const ok = (label, cond, extra = "") => { cond ? pass++ : fail++; console.log(`${cond ? "PASS" : "FAIL"}  ${label}${cond ? "" : "  << " + extra}`); };
 const run = (active, args, n) => { try { return { value: comfyUIResolveWorkflow(active, args, n) }; } catch (e) { return { error: e.message }; } };
 
-// 1. 显式请求可行 → 直接用，不提示
+// 1. 胶囊选了什么就出什么：胶囊能胜任时，显式请求一律让位
 {
-  const r = run(mkActive("RealVisXL-V5"), { workflow: "RealVisXL-V5-Edit" }, 1);
-  ok("显式请求可行直接用", r.value && r.value.workflow.name === "RealVisXL-V5-Edit", JSON.stringify(r));
-  ok("无多余 notice", r.value && r.value.notice === void 0, String(r.value && r.value.notice));
+  const r = run(mkActive("RealVisXL-V5-Edit"), { workflow: "RealVisXL-V5" }, 1);
+  ok("胶囊能胜任时压过显式请求", r.value && r.value.workflow.name === "RealVisXL-V5-Edit", JSON.stringify(r));
+  ok("压过时给 notice", r.value && typeof r.value.notice === "string" && r.value.notice.includes("胶囊"), String(r.value && r.value.notice));
+}
+// 1b. 胶囊就选了请求的那条 → 用它，不该有多余提示
+{
+  const r = run(mkActive("RealVisXL-V5-Edit"), { workflow: "RealVisXL-V5-Edit" }, 1);
+  ok("胶囊=请求时不重复提示", r.value && r.value.workflow.name === "RealVisXL-V5-Edit" && r.value.notice === void 0, JSON.stringify(r));
+}
+// 1c. 没传 workflow，胶囊能胜任 → 直接用胶囊，不提示
+{
+  const r = run(mkActive("RealVisXL-V5"), {}, 0);
+  ok("胶囊能胜任直接用", r.value && r.value.workflow.name === "RealVisXL-V5" && r.value.notice === void 0, JSON.stringify(r));
 }
 // 2. 显式请求不可行（t2i 做改图）→ 自动退到 edit，不报错
 {
