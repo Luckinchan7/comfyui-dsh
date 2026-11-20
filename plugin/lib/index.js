@@ -130,35 +130,47 @@ function makeStore(ctx) {
 
 // ── 工具参数 ───────────────────────────────────────────────────────────────
 
+// ctx.tools.register() 不做 schema 编译，parameters 会原样变成模型请求里的
+// `input_schema`。所以这里必须是完整的 JSON Schema（根节点 type: "object"），
+// 不能只给属性表 —— 严格校验的上游（如 Trae code 4027）会直接 400 整条请求。
 const listParameters = {
-  refresh: {
-    type: 'boolean',
-    description: '重新扫一遍 ComfyUI（默认 true；给 false 只读上次结果）。',
+  type: 'object',
+  properties: {
+    refresh: {
+      type: 'boolean',
+      description: '重新扫一遍 ComfyUI（默认 true；给 false 只读上次结果）。',
+    },
   },
 }
 
 const syncParameters = {
-  only: {
-    type: 'array',
-    items: { type: 'string' },
-    description: '只处理这些底模（按名字或文件名匹配，省略=全部）。',
-  },
-  activate: {
-    type: 'string',
-    description: '同步完成后把哪个工作流设为当前生图模型；省略则不改。',
-  },
-  overwrite: {
-    type: 'boolean',
-    description: '已存在同名工作流时是否覆盖（默认沿用插件配置）。',
+  type: 'object',
+  properties: {
+    only: {
+      type: 'array',
+      items: { type: 'string' },
+      description: '只处理这些底模（按名字或文件名匹配，省略=全部）。',
+    },
+    activate: {
+      type: 'string',
+      description: '同步完成后把哪个工作流设为当前生图模型；省略则不改。',
+    },
+    overwrite: {
+      type: 'boolean',
+      description: '已存在同名工作流时是否覆盖（默认沿用插件配置）。',
+    },
   },
 }
 
 const switchParameters = {
-  workflow: {
-    type: 'string',
-    required: true,
-    description: '要切换到的目标：工作流名、底模名或文件名任一形式都接受。',
+  type: 'object',
+  properties: {
+    workflow: {
+      type: 'string',
+      description: '要切换到的目标：工作流名、底模名或文件名任一形式都接受。',
+    },
   },
+  required: ['workflow'],
 }
 
 const text = (value) => [{ type: 'text', text: typeof value === 'string' ? value : JSON.stringify(value, null, 2) }]

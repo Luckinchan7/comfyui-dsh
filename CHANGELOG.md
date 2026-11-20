@@ -6,6 +6,56 @@
 
 ---
 
+## [1.4.2] — 2026-11-20
+
+### 修复
+
+- **`dsh-comfy-models` 三个工具的畸形 JSON Schema**，这是「整个请求被上游 400」的根因。
+  三个 `parameters` 原来是裸属性表：
+
+  ```js
+  const listParameters = {
+    refresh: { type: 'boolean', description: '…' },
+  }
+  ```
+
+  而 `ctx.tools.register()`（`@deepseek-ai/dsh-tools/lib/index.js:433`）只对
+  `output.schema` 调 `assertSupportedJsonSchema`，**完全不校验 `parameters`** ——
+  畸形 schema 就这么被原样塞进模型请求的 `input_schema`
+  （`@deepseek-ai/dsh-llm-deepseek/lib/index.js:1782` `input_schema: tool.parameters`；
+  OpenAI 风格那边是 `dsh-our-free-model/vendor/channel-pack/pack.js:36477`
+  `function: { name, description, parameters: tool.parameters }`）。
+  严格校验的上游会直接拒掉**整条请求**：
+
+  ```
+  400: Trae refused the request · Trae code 4027 ·
+  upstream: tool call failed: tools.6.function.parameters must be a JSON Schema of type object
+  ```
+
+  症状是「这个会话发什么都失败」，看起来像会话坏了。修法是给三个 `parameters` 包上
+  `{ type: 'object', properties: {...} }`，`switchParameters` 的 `required: true`
+  改成标准的 `required: ['workflow']` 数组。
+
+### 新增
+
+- **`scripts/fix-comfy-models-schema.py`**：上面那处修复的幂等补丁器，`--check` 只体检，
+  自动备份 `.bak-schema-<ts>`。同时处理 `.local-packages/` 源目录与 `node_modules/`
+  两份（它们是硬链接，但 `edit` 会把链接断开成两个独立 inode）。
+- **`scripts/audit-tool-schemas.py`**：全量扫 profile 里每个插件的工具 schema。
+  用假 ctx 跑 `apply()`、收 `tools.register()` 的 definition，再交给 DSH 自己的
+  `assertSupportedJsonSchema` 判。两层报告 —— 根缺 `type: "object"`（会导致 400）
+  与用了 DSH 子集之外的 JSON Schema 关键字（`minLength` / `pattern` / `minItems`、
+  `type: ["string","array"]` 这类，本地能跑，换严格上游可能炸）。
+
+### 已知问题
+
+- `dsh-connect-workbuddy` 的两个工具在 DSH 子集之外用了 `minLength` / `pattern` /
+  `minItems`，`workbuddy_draw_video` 的 `image` 还写成了 `type: ["string","array"]`
+  （DSH 只收单一类型字符串）。它们的根 `type` 是 `object`，不会触发 4027，
+  但换到做严格 schema 校验的上游时会有风险。
+
+---
+
 ## [未发布]
 
 ### 计划中
@@ -371,7 +421,8 @@ README 从纯文字改成图文页。补上 banner、四张实测截图，中英
 | v1.1.0 | + RealVisXL V5 / Juggernaut XI / FLUX Krea | `--cache-lru 8 --reserve-vram 0.3` | 15–33 GB |
 | v1.1.1 | 同上（纯文档） | 同上 | 同上 |
 
-[未发布]: https://github.com/devin667/comfyui-dsh/compare/v1.4.1...HEAD
+[未发布]: https://github.com/devin667/comfyui-dsh/compare/v1.4.2...HEAD
+[1.4.2]: https://github.com/devin667/comfyui-dsh/compare/v1.4.1...v1.4.2
 [1.4.1]: https://github.com/devin667/comfyui-dsh/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/devin667/comfyui-dsh/compare/v1.3.1...v1.4.0
 [1.3.1]: https://github.com/devin667/comfyui-dsh/compare/v1.3.0...v1.3.1

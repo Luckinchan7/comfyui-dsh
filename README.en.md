@@ -1,7 +1,7 @@
 # comfyui-dsh — local image generation, ComfyUI + DeepSeek Harness
 
 [![DSH target](https://img.shields.io/badge/DeepSeek%20Harness-0.2.2--rc.3-4f46e5)](docs/COMPATIBILITY.md)
-[![version](https://img.shields.io/badge/version-1.4.1-16a34a)](https://github.com/devin667/comfyui-dsh/releases/tag/v1.4.1)
+[![version](https://img.shields.io/badge/version-1.4.2-16a34a)](https://github.com/devin667/comfyui-dsh/releases/tag/v1.4.2)
 [![checkpoints](https://img.shields.io/badge/checkpoints-4-0ea5e9)](docs/MODELS.md)
 [![workflows](https://img.shields.io/badge/workflows-15-8b5cf6)](dsh/workflows)
 [![license](https://img.shields.io/badge/license-MIT-a3a3a3)](LICENSE)
@@ -465,6 +465,7 @@ part's byte count, and the file magic number.
 | **v1.3.1 (2026-11-18)** | same (capsule-wins patch, checkpoint on the card, 13 workflows, audit script) | same | same |
 | **v1.4.0 (2026-11-19)** | same (auto-recovery on a wrong workflow pick, FaceID weight fix, Rework workflow, Undress prompt de-conflict) | same | same |
 | **v1.4.1 (2026-11-19)** | same (all five image-editing workflows now honour `size` / `aspect_ratio`; all 15 workflows take a frame size) | same | same |
+| **v1.4.2 (2026-11-20)** | same (fix the malformed tool schemas in `dsh-comfy-models` that made Trae reject the whole request with 400) | same | same |
 
 Per-change details in **[CHANGELOG.md](CHANGELOG.md)**.
 

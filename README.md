@@ -1,7 +1,7 @@
 # comfyui-dsh — 本地生图，ComfyUI + DeepSeek Harness
 
 [![DSH target](https://img.shields.io/badge/DeepSeek%20Harness-0.2.2--rc.3-4f46e5)](docs/COMPATIBILITY.md)
-[![version](https://img.shields.io/badge/version-1.4.1-16a34a)](https://github.com/devin667/comfyui-dsh/releases/tag/v1.4.1)
+[![version](https://img.shields.io/badge/version-1.4.2-16a34a)](https://github.com/devin667/comfyui-dsh/releases/tag/v1.4.2)
 [![checkpoints](https://img.shields.io/badge/checkpoints-4-0ea5e9)](docs/MODELS.md)
 [![workflows](https://img.shields.io/badge/workflows-15-8b5cf6)](dsh/workflows)
 [![license](https://img.shields.io/badge/license-MIT-a3a3a3)](LICENSE)
@@ -182,6 +182,28 @@ powershell -ExecutionPolicy Bypass -File .\dsh\install-plugin.ps1
 
 改的是 profile 的 `cordis.patch.yml`，该文件被 HMR 监听，**改完十几秒自动生效，不用重启 DSH**。
 细节见 [plugin/README.md](plugin/README.md)。
+
+**这三个工具的 schema 曾经是畸形的**（`parameters` 只写了属性表，没有外层
+`{ type: 'object', properties: {...} }`）。`ctx.tools.register()` 只校验
+`output.schema`、不校验 `parameters`，所以本地一声不响地放行，畸形 schema 被原样
+塞进模型请求的 `input_schema`。严格校验的上游会直接拒掉整条请求：
+
+```
+400: Trae refused the request · Trae code 4027 ·
+upstream: tool call failed: tools.6.function.parameters must be a JSON Schema of type object
+```
+
+注意这不是「某个工具调用失败」，是**整个请求 400** —— 那一轮直接死掉，用户看到的现象
+是「发什么都失败，会话像是坏了」。
+
+```powershell
+python .\scripts\audit-tool-schemas.py        # 扫全部插件的工具 schema
+python .\scripts\fix-comfy-models-schema.py   # 修（幂等，自动备份）
+```
+
+两个脚本都不依赖 DSH 运行时：用假 ctx 跑每个插件的 `apply()`，收 `tools.register()`
+拿到的 definition，再交给 DSH 自己的 `assertSupportedJsonSchema` 判。修完重载插件
+（`include:dsh-comfy-models` 关→开）或重启 DSH 才生效。
 
 ### 选错工作流不会白跑
 
@@ -415,6 +437,7 @@ hf-mirror 被限流时会把报错页当正文写进文件，大小完全吻合�
 | **v1.3.1（2026-11-18）** | 同上（胶囊优先补丁、底模上卡、13 条工作流、对账脚本） | 同上 | 同上 |
 | **v1.4.0（2026-11-19）** | 同上（选错工作流自动改道、FaceID 权重修正、Rework 工作流、Undress 提示词去冲突） | 同上 | 同上 |
 | **v1.4.1（2026-11-19）** | 同上（五条改图工作流补上 `size` / `aspect_ratio` 支持，15 条全部吃尺寸） | 同上 | 同上 |
+| **v1.4.2（2026-11-20）** | 同上（修 `dsh-comfy-models` 三个工具的畸形 schema —— 它让 Trae 通道整条请求 400） | 同上 | 同上 |
 
 逐条变更见 **[CHANGELOG.md](CHANGELOG.md)**。
 
