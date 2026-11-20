@@ -46,12 +46,12 @@
   },
   {
     "name": "FLUX-Krea",
-    "presetPrompt": "RAW photo, photorealistic, natural skin texture, sharp focus, high detail",
+    "presetPrompt": "RAW photo, photorealistic, flawless smooth skin, clean even complexion, sharp focus, high detail",
     "file": "workflows/FLUX-Krea.json"
   },
   {
     "name": "FLUX-Krea-Edit",
-    "presetPrompt": "RAW photo, photorealistic, natural skin texture, sharp focus",
+    "presetPrompt": "RAW photo, photorealistic, flawless smooth skin, clean even complexion, sharp focus",
     "file": "workflows/FLUX-Krea-Edit.json"
   },
   {

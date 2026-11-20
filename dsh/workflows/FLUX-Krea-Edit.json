@@ -32,7 +32,7 @@
   "5": {
     "class_type": "CLIPTextEncode",
     "inputs": {
-      "text": "cartoon, anime, illustration, painting, 3d render, cgi, plastic skin, airbrushed, oversmooth, blurry, lowres, jpeg artifacts, watermark, text, signature",
+      "text": "freckles, moles, birthmark, beauty mark, blemishes, skin spots, dark spots, age spots, sun spots, acne, pimples, blackheads, blotchy skin, uneven skin tone, rough skin, cartoon, anime, illustration, painting, 3d render, cgi, plastic skin, airbrushed, oversmooth, blurry, lowres, jpeg artifacts, watermark, text, signature",
       "clip": [
         "2",
         0

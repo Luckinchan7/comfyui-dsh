@@ -6,6 +6,37 @@
 
 ---
 
+## [1.4.3] — 2026-11-20
+
+### 修复
+
+- **FLUX 出图满脸褐色斑点**。`FLUX-Krea` 是 dev 版、`cfg = 1.0`，cfg 为 1 时负向分支
+  不参与计算 —— 负向里写多少 `freckles, moles, skin spots` 都等于没写。原 `presetPrompt`
+  又是 `RAW photo, photorealistic, natural skin texture, sharp focus`，`natural skin texture`
+  这个词在 Q2 量化上直接放大成斑块。两条 `FLUX-Krea*` 工作流的 `presetPrompt` 改为
+  `RAW photo, photorealistic, flawless smooth skin, clean even complexion, sharp focus`
+  （`-Edit` 少一个 `high detail`）。八组 guidance / 正向措辞对照见 `docs/MODELS.md`。
+- 负向串补 `freckles, moles, birthmark, beauty mark, blemishes, skin spots, dark spots,
+  age spots, sun spots, acne, pimples, blackheads, blotchy skin, uneven skin tone, rough skin`。
+  对 `cfg = 1` 无实际效果，但换成别的 FLUX 变体（cfg > 1）时能直接用。
+
+### 变更
+
+- `docs/preview/checkpoints-4way.jpg` 四格全部换成新图（同 prompt 重出，`832×1216`）。
+  FLUX 那格用了去斑后的版本，副标题删掉「皮肤有量化色斑」。
+- `docs/MODELS.md` FLUX 一节改结论：原写「Q2_K 皮肤质量过不了关，FLUX 能跑但不必用」，
+  现补上完整去斑实验表并改为「斑点不再是拦路虎，但只能靠正向措辞」。
+- README 中英四底模表的 FLUX 定位描述同步。
+
+### 已知问题
+
+- `guidance` 提到 4.5 以上肤色会发灰；`porcelain` / `no visible skin texture` /
+  `beauty retouched` 会把皮肤推向塑料感并改写构图与衣着 —— 这三类词别用。
+- FLUX 冷启动（刚跑完 SDXL，显存要卸载）单张可达 610 s，`comfyuiTimeoutMs` 默认已调到
+  1800000。插件报 `timed out` 不等于生成失败，任务仍在 ComfyUI 队列里，去 `/history` 捞。
+
+---
+
 ## [1.4.2] — 2026-11-20
 
 ### 修复
@@ -421,7 +452,8 @@ README 从纯文字改成图文页。补上 banner、四张实测截图，中英
 | v1.1.0 | + RealVisXL V5 / Juggernaut XI / FLUX Krea | `--cache-lru 8 --reserve-vram 0.3` | 15–33 GB |
 | v1.1.1 | 同上（纯文档） | 同上 | 同上 |
 
-[未发布]: https://github.com/devin667/comfyui-dsh/compare/v1.4.2...HEAD
+[未发布]: https://github.com/devin667/comfyui-dsh/compare/v1.4.3...HEAD
+[1.4.3]: https://github.com/devin667/comfyui-dsh/compare/v1.4.2...v1.4.3
 [1.4.2]: https://github.com/devin667/comfyui-dsh/compare/v1.4.1...v1.4.2
 [1.4.1]: https://github.com/devin667/comfyui-dsh/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/devin667/comfyui-dsh/compare/v1.3.1...v1.4.0

@@ -1,7 +1,7 @@
 # comfyui-dsh — 本地生图，ComfyUI + DeepSeek Harness
 
 [![DSH target](https://img.shields.io/badge/DeepSeek%20Harness-0.2.2--rc.3-4f46e5)](docs/COMPATIBILITY.md)
-[![version](https://img.shields.io/badge/version-1.4.2-16a34a)](https://github.com/devin667/comfyui-dsh/releases/tag/v1.4.2)
+[![version](https://img.shields.io/badge/version-1.4.3-16a34a)](https://github.com/devin667/comfyui-dsh/releases/tag/v1.4.3)
 [![checkpoints](https://img.shields.io/badge/checkpoints-4-0ea5e9)](docs/MODELS.md)
 [![workflows](https://img.shields.io/badge/workflows-15-8b5cf6)](dsh/workflows)
 [![license](https://img.shields.io/badge/license-MIT-a3a3a3)](LICENSE)
@@ -32,7 +32,7 @@ kitchen making coffee, morning backlight, unedited`）、同一场景：
 | **RealVisXL V5.0 fp16** | 6.5 GB | **26–31 s** | 写实默认档。纪实/生活感最准 |
 | Juggernaut XI v11 | 6.6 GB | 24–30 s | 商业/电影感，手部结构更稳，但过度精致 |
 | Illustrious-XL v1.1 | 6.5 GB | 26–33 s | 二次元插画。左上那张是用写实 prompt 强扭的结果 |
-| FLUX.1 Krea dev Q2_K | 3.7 GB | 82 s | 场景理解最强，慢 3–4 倍，皮肤有量化色斑 |
+| FLUX.1 Krea dev Q2_K | 3.7 GB | 82 s | 场景理解最强，慢 3–4 倍。Q2 量化本身会留褐色斑点，靠正向措辞压掉 |
 
 六场景对拍、FLUX 四档量化的实测数据、提示词四风格、参数甜点，见
 **[docs/MODELS.md](docs/MODELS.md)**。
@@ -438,6 +438,7 @@ hf-mirror 被限流时会把报错页当正文写进文件，大小完全吻合�
 | **v1.4.0（2026-11-19）** | 同上（选错工作流自动改道、FaceID 权重修正、Rework 工作流、Undress 提示词去冲突） | 同上 | 同上 |
 | **v1.4.1（2026-11-19）** | 同上（五条改图工作流补上 `size` / `aspect_ratio` 支持，15 条全部吃尺寸） | 同上 | 同上 |
 | **v1.4.2（2026-11-20）** | 同上（修 `dsh-comfy-models` 三个工具的畸形 schema —— 它让 Trae 通道整条请求 400） | 同上 | 同上 |
+| **v1.4.3（2026-11-20）** | 同上（FLUX 去斑：presetPrompt 改写 + 四底模对比图换新 + MODELS.md 补八组对照） | 同上 | 同上 |
 
 逐条变更见 **[CHANGELOG.md](CHANGELOG.md)**。
 

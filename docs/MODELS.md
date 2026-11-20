@@ -111,8 +111,39 @@ Q3_K_S 明明完整装进了显存却比 Q2_K 慢 40 倍，说明瓶颈不在显
 定量验证（64×64 块最小方差，测平坦区噪点）：FLUX 15.5 / RealVisXL 15.3 / Juggernaut 15.7
 —— 平坦区没差别，**损伤只集中在皮肤色块**，所以是真的量化伪影而不是全局噪声。
 
-结论：8 GB 卡上能跑的最高可用量化是 Q2_K，而 Q2_K 的皮肤质量过不了关。**FLUX 在 8 GB
-卡上属于"能跑但不必用"**：慢 3–4 倍，换来的场景理解提升被皮肤伪影抵消。
+### 但斑点能压掉，而且只能靠正向
+
+关键前提：`FLUX-Krea` 是 **dev 版、`cfg = 1.0`**。cfg 为 1 时负向分支根本不参与计算，
+**负向提示词里的 `freckles, moles, skin spots...` 写了等于没写**。想在 FLUX 上去斑只有
+两条路：改写正向措辞、调 `guidance`（FLUX 的 guidance 走 `FluxGuidance` 节点，不是 cfg）。
+
+八组对照（832×1216，28 步，seed 固定，只换正向尾巴与 guidance）：
+
+| 变体 | guidance | 正向尾巴 | 耗时 | 结果 |
+|---|---|---|---|---|
+| A | 3.5 | `flawless clear skin, smooth even complexion, clean skin, no freckles, no moles, no spots, no blemishes, poreless skin` | 140 s | 斑点明显减少 |
+| B | 4.5 | 同 A | 120 s | 更干净，但肤色发灰 |
+| C | 4.0 | 原 prompt + `flawless clear skin, smooth even complexion` | 140 s | 仍留少量斑点 |
+| D | 3.5 | `flawless clear skin, smooth even complexion, clean unblemished skin, soft matte skin` | 140 s | 干净，但皮肤发木 |
+| E | 3.0 | 同 D | 130 s | 与 D 接近，细节略软 |
+| F | 3.5 | `flawless porcelain skin, even smooth complexion, matte clean skin, no visible skin texture, beauty retouched skin` | 140 s | 脸完全干净，**但构图和衣着被改写** |
+| G | 4.5 | 同 F | 143 s | 同上，更硬 |
+| **H** | **3.5** | **`airbrushed flawless skin, perfectly even skin tone, clear smooth complexion`** | 610 s（冷启动） | **脸干净、无斑点、保留原构图与衣着 ⇒ 采用** |
+
+两条经验：
+- `no freckles` / `no moles` 这类否定式在正向里几乎不起作用，**真正有效的是描述"均匀"**
+  （`perfectly even skin tone` / `clear smooth complexion`）。写"不要斑点"模型只会更注意斑点。
+- `porcelain` / `no visible skin texture` / `beauty retouched` 会把皮肤推向塑料感，顺带把
+  构图、衣着一起改写（F 那组白 T 恤变成了暴露上衣）。**别用这三个词。**
+
+`FLUX-Krea` / `FLUX-Krea-Edit` 两条工作流的 `presetPrompt` 已改成
+`RAW photo, photorealistic, flawless smooth skin, clean even complexion, sharp focus`，
+调用方不需要自己写去斑词。负向串里也补了 `freckles, moles, birthmark, blemishes, skin spots...`
+——对 cfg=1 不产生效果，但换成别的 FLUX 变体（cfg > 1）时能直接用。
+
+结论修正：**FLUX 在 8 GB 卡上属于"能跑，且值得为场景理解跑"**——慢 3–4 倍是真代价，
+但斑点不再是拦路虎。皮肤质感仍不如 RealVisXL，日常出图走 SDXL，需要复杂构图/多物体
+关系时才叫 FLUX。
 
 ### 图内文字（三方同 prompt）
 
