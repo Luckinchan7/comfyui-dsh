@@ -1,7 +1,7 @@
 # comfyui-dsh — 本地生图，ComfyUI + DeepSeek Harness
 
 [![DSH target](https://img.shields.io/badge/DeepSeek%20Harness-0.2.2--rc.3-4f46e5)](docs/COMPATIBILITY.md)
-[![version](https://img.shields.io/badge/version-1.4.4-16a34a)](https://github.com/Luckinchan7/comfyui-dsh/releases/tag/v1.4.4)
+[![version](https://img.shields.io/badge/version-1.4.5-16a34a)](https://github.com/Luckinchan7/comfyui-dsh/releases/tag/v1.4.5)
 [![checkpoints](https://img.shields.io/badge/checkpoints-4-0ea5e9)](docs/MODELS.md)
 [![workflows](https://img.shields.io/badge/workflows-15-8b5cf6)](dsh/workflows)
 [![license](https://img.shields.io/badge/license-MIT-a3a3a3)](LICENSE)
@@ -446,6 +446,7 @@ hf-mirror 被限流时会把报错页当正文写进文件，大小完全吻合�
 | **v1.4.2（2026-11-20）** | 同上（修 `dsh-comfy-models` 三个工具的畸形 schema —— 它让 Trae 通道整条请求 400） | 同上 | 同上 |
 | **v1.4.3（2026-11-20）** | 同上（FLUX 去斑：presetPrompt 改写 + 四底模对比图换新 + MODELS.md 补八组对照） | 同上 | 同上 |
 | **v1.4.4（2026-11-20）** | 同上（胶囊重新成为唯一权威：选什么就出什么，胶囊不胜任才让位给调用参数） | 同上 | 同上 |
+| **v1.4.5（2026-11-25）** | 同上（仓库迁到新账号，所有链接与发布脚本同步） | 同上 | 同上 |
 
 逐条变更见 **[CHANGELOG.md](CHANGELOG.md)**。
 

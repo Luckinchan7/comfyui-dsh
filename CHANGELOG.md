@@ -6,6 +6,23 @@
 
 ---
 
+## [1.4.5] — 2026-11-25
+
+### 变更
+
+- **仓库迁到 `Luckinchan7` 账号**。README 中英的徽章与 clone 地址、`LICENSE` 的版权行、
+  `CHANGELOG` 的逐版对比链接、`docs/AGENT-PROMPT.md`、`docs/INSTALL-QUICK.md`、
+  `scripts/make-release.py` 的 `REPO` 常量全部同步，仓库里不再有旧账号名。
+- 新仓库从 `main` 重新发布，版本号接续到 `v1.4.5`，历史版本号与 CHANGELOG 内容保持原样
+  （旧仓库的 release 不迁移，链接指向新仓库对应 tag）。
+
+### 已知问题
+
+- 旧仓库 `devin667/comfyui-dsh` 上的 release 资产不会自动出现在新仓库；如果旧链接还有引用，
+  需要在新仓库补建同名 tag 的 release，或在文档里改指新地址（本版已改文档）。
+
+---
+
 ## [1.4.4] — 2026-11-20
 
 ### 修复
@@ -480,7 +497,8 @@ README 从纯文字改成图文页。补上 banner、四张实测截图，中英
 | v1.1.0 | + RealVisXL V5 / Juggernaut XI / FLUX Krea | `--cache-lru 8 --reserve-vram 0.3` | 15–33 GB |
 | v1.1.1 | 同上（纯文档） | 同上 | 同上 |
 
-[未发布]: https://github.com/Luckinchan7/comfyui-dsh/compare/v1.4.4...HEAD
+[未发布]: https://github.com/Luckinchan7/comfyui-dsh/compare/v1.4.5...HEAD
+[1.4.5]: https://github.com/Luckinchan7/comfyui-dsh/compare/v1.4.4...v1.4.5
 [1.4.4]: https://github.com/Luckinchan7/comfyui-dsh/compare/v1.4.3...v1.4.4
 [1.4.3]: https://github.com/Luckinchan7/comfyui-dsh/compare/v1.4.2...v1.4.3
 [1.4.2]: https://github.com/Luckinchan7/comfyui-dsh/compare/v1.4.1...v1.4.2

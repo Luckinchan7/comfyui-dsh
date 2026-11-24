@@ -1,7 +1,7 @@
 # comfyui-dsh — local image generation, ComfyUI + DeepSeek Harness
 
 [![DSH target](https://img.shields.io/badge/DeepSeek%20Harness-0.2.2--rc.3-4f46e5)](docs/COMPATIBILITY.md)
-[![version](https://img.shields.io/badge/version-1.4.4-16a34a)](https://github.com/Luckinchan7/comfyui-dsh/releases/tag/v1.4.4)
+[![version](https://img.shields.io/badge/version-1.4.5-16a34a)](https://github.com/Luckinchan7/comfyui-dsh/releases/tag/v1.4.5)
 [![checkpoints](https://img.shields.io/badge/checkpoints-4-0ea5e9)](docs/MODELS.md)
 [![workflows](https://img.shields.io/badge/workflows-15-8b5cf6)](dsh/workflows)
 [![license](https://img.shields.io/badge/license-MIT-a3a3a3)](LICENSE)
@@ -476,6 +476,7 @@ part's byte count, and the file magic number.
 | **v1.4.2 (2026-11-20)** | same (fix the malformed tool schemas in `dsh-comfy-models` that made Trae reject the whole request with 400) | same | same |
 | **v1.4.3 (2026-11-20)** | same (FLUX spot removal: presetPrompt rewrite, refreshed 4-way comparison image, eight-variant table in MODELS.md) | same | same |
 | **v1.4.4 (2026-11-20)** | same (the capsule is authoritative again: what you pick is what runs; a request only takes over when the capsule cannot do the call) | same | same |
+| **v1.4.5 (2026-11-25)** | same (repository moved to the new account; every link and the release script follow) | same | same |
 
 Per-change details in **[CHANGELOG.md](CHANGELOG.md)**.
 
