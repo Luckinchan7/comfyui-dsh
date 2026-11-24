@@ -6,6 +6,38 @@
 
 ---
 
+## [1.5.0] — 2026-11-25
+
+### 新增
+
+- **Krea 2 Turbo 接进来了**。`Krea2`（文生图）与 `Krea2-Edit`（改图）两条工作流，
+  外加 `docs/MODELS.md` 的完整一节。底模是 `krea2_turbo-Q2_K.gguf`，文本编码器是
+  `qwen3vl_4b_fp8_scaled.safetensors`，VAE 用 `qwen_image_vae.safetensors`。
+  热态 832×1216 八步 48 s，冷态首图约 190 s。
+
+  Krea 2 不是 BFL 的 FLUX 系列，是 krea.ai 自家的 28 层 DiT，文本侧取 Qwen3-VL-4B
+  的第 2/5/8/…/35 层共 12 层 hidden state 堆叠成 30720 维 conditioning。它比 FLUX
+  更听得懂长句，而热态速度只有 FLUX 的六成。
+
+### 修复
+
+- **`Krea2-Edit` 的 denoise 从 0.65 降到 0.55**。首次用 `edit_image` 跑 0.65 时出了
+  主体复制（一张图里两个穿风衣的人）；同 seed 4242 重扫 0.55 / 0.65 / 0.75 三档，
+  三张都是单人 —— 复制的触发条件是那次的随机 seed 而不是 denoise 本身，但 0.55 在
+  保持原构图和跟随 prompt 之间更稳，定为默认。0.45 则几乎不动、只剩调色。
+
+### 已知问题
+
+- **Krea 2 的文本编码器不能用 GGUF**。`CLIPLoaderGGUF` 只输出最后一层 hidden state，
+  硬接到 Krea 2 会报 `Krea2 expects conditioning with 12x2560=30720 features
+  (a 12-layer Qwen3-VL stack) but got 2560.` 只能走 `CLIPLoader` type=`krea2` +
+  fp8 safetensors。这一条把显存下限推到约 9.5 GB（4.6 GB 底模 + 4.9 GB 文本编码器）。
+- **底模只能贴 Q2_K**。Q4_K_S（7.0 GB）+ fp8 文本编码器 = 12.5 GB，8 GB 卡
+  `loaded partially`、1716 MB 溢出到内存，退化成每步 640 秒（8 步 75 分钟）。
+  Q3_K 落在 6.0 GB 的尴尬区（能装但解量化慢），别试。
+- `Krea2-Edit` 的 `{{width}}`/`{{height}}` 走 `ImageScale` + `crop center`，
+  和另外四条 `-Edit` 一样是硬裁；源图比例差太多时主体可能被切边。
+
 ## [1.4.5] — 2026-11-25
 
 ### 变更
@@ -497,7 +529,8 @@ README 从纯文字改成图文页。补上 banner、四张实测截图，中英
 | v1.1.0 | + RealVisXL V5 / Juggernaut XI / FLUX Krea | `--cache-lru 8 --reserve-vram 0.3` | 15–33 GB |
 | v1.1.1 | 同上（纯文档） | 同上 | 同上 |
 
-[未发布]: https://github.com/Luckinchan7/comfyui-dsh/compare/v1.4.5...HEAD
+[未发布]: https://github.com/Luckinchan7/comfyui-dsh/compare/v1.5.0...HEAD
+[1.5.0]: https://github.com/Luckinchan7/comfyui-dsh/compare/v1.4.5...v1.5.0
 [1.4.5]: https://github.com/Luckinchan7/comfyui-dsh/compare/v1.4.4...v1.4.5
 [1.4.4]: https://github.com/Luckinchan7/comfyui-dsh/compare/v1.4.3...v1.4.4
 [1.4.3]: https://github.com/Luckinchan7/comfyui-dsh/compare/v1.4.2...v1.4.3

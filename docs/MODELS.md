@@ -20,6 +20,7 @@
 | **RealVisXL V5.0** | `RealVisXL_V5.0_fp16.safetensors` | 6.5 GB | SDXL 写实 | **默认**，纪实/生活感 |
 | Juggernaut XI v11 | `Juggernaut-XI-v11_fp16.safetensors` | 6.6 GB | SDXL 写实 | 商业/电影感备选 |
 | FLUX.1 Krea dev | `flux1-krea-dev-Q2_K.gguf` | 3.7 GB | FLUX 12B | 精品出图，慢 3–4 倍 |
+| **Krea 2 Turbo** | `krea2_turbo-Q2_K.gguf` | 4.6 GB | 28 层 DiT | 场景理解最强，热态 48 s，冷态 3 分钟 |
 
 FLUX 配套件（放 `models/text_encoders/` 与 `models/vae/`）：
 
@@ -29,7 +30,14 @@ FLUX 配套件（放 `models/text_encoders/` 与 `models/vae/`）：
 | `clip_l.safetensors` | 235 MB | CLIP-L |
 | `flux_ae.safetensors` | 320 MB | FLUX VAE |
 
-全部从 hf-mirror 下载，总计约 19 GB 磁盘。
+Krea 2 配套件（**文本编码器必须是 safetensors，见下文**）：
+
+| 文件 | 体积 | 说明 |
+|---|---|---|
+| `qwen3vl_4b_fp8_scaled.safetensors` | 4.9 GB | Qwen3-VL-4B，fp8 缩放。**只能用这个** |
+| `qwen_image_vae.safetensors` | 242 MB | Qwen-Image VAE |
+
+全部从 hf-mirror 下载，总计约 26 GB 磁盘。
 
 ### 文件校验方法
 
@@ -65,6 +73,7 @@ print(len(r.tensors), r.get_field("general.architecture"))
 | **RealVisXL V5** | **26–31 s** | **58 s** |
 | Juggernaut XI v11 | 24–30 s | 58 s |
 | FLUX Krea Q2_K | 82 s | — |
+| Krea 2 Turbo Q2_K | 48 s（冷态首图约 190 s） | — |
 
 （单图耗时的浮动来自显存占用——浏览器和微信吃掉 2 GB 时会掉到 140 秒级别，
 见 [PERFORMANCE.md](PERFORMANCE.md)。HiRes 那列是显存干净时测的。）
@@ -158,6 +167,53 @@ Q3_K_S 明明完整装进了显存却比 Q2_K 慢 40 倍，说明瓶颈不在显
 SDXL 对短英文招牌的拼写能力不稳定，同 prompt 不同 seed 差异很大。**要准确的图内文字，
 本地 SDXL/FLUX 都别指望**，这是模型能力问题。
 
+### Krea 2 Turbo Q2_K
+
+Krea 2 是 krea.ai 自家的新模型（Krea-2-Raw / Krea-2-Turbo），**不是 BFL 的 FLUX 系列**。
+ComfyUI 官方转包在 `Comfy-Org/Krea-2`，架构 28 层 DiT，文本侧是 Qwen3-VL-4B 取 12 层 tap。
+
+它和 FLUX 的差别不在画质档位，而在**它真的听得懂长句**。同一个「天台墨绿长裙」类
+复合 prompt，FLUX 会丢其中一两个约束，Krea 2 基本全接住。
+
+#### 8 GB 卡的两条硬约束
+
+这两条是踩了整整一轮才摸清的，写下来省得重踩：
+
+1. **文本编码器不能用 GGUF**。Krea 2 的 conditioning 是 `(B,12,seq,2560)` 摊平成
+   `(B,seq,30720)` —— 要 Qwen3-VL 的**第 2/5/8/11/…/35 层共 12 层 hidden state 堆叠**。
+   `CLIPLoaderGGUF` 只吐最后一层，硬接会直接报
+   `Krea2 expects conditioning with 12x2560=30720 features (a 12-layer Qwen3-VL stack) but got 2560.`
+   所以文本编码器只能是 `qwen3vl_4b_fp8_scaled.safetensors` + `CLIPLoader` type=`krea2`。
+2. **底模只能贴 Q2_K**。Q4_K_S（7.0 GB）+ fp8 文本编码器（4.9 GB）= 12.5 GB，
+   8 GB 卡会 `loaded partially … 1716.13 MB offloaded`，退化成**每步 640 秒**，
+   8 步要 75 分钟。降到 Q2_K（4.6 GB）后 `loaded completely; 5045.55 MB loaded, full load: True`。
+
+Q2_K 是这张卡上唯一可行的档。Q3_K 落在 6.0 GB 的尴尬区（能装但解量化慢），别试。
+
+#### 速度
+
+| 尺寸 | 步数 | 冷态 | 热态 |
+|---|---|---|---|
+| 832×1216 | 8 | 190 s | **48 s**（6.0 s/步） |
+| 1024×1024 | 8 | — | 48 s |
+| 640×640 | 8 | 197 s | — |
+| 576×720 | 8 | 1180 s | — |
+
+冷态那 190 秒里约 150 秒在加载权重（4.6 GB 底模 + 4.9 GB 文本编码器，还得先把 SDXL 卸了）。
+**热态 48 秒和 RealVisXL 的 27 秒只差 1.8 倍**，这是它比 FLUX（82 秒）更实用的地方。
+
+#### 画质定位
+
+同 prompt 同 seed 和 RealVisXL V5 对拍（`_cmp_k2_rv5.jpg`）：Krea 2 的皮肤纹理更细、
+光源方向更一致、背景杂物更有逻辑；但 Q2 量化让暗部略微发灰，极端特写下不如
+RealVisXL 的毛孔层次。**它不是「更好的 RealVisXL」，是「更听得懂话的 RealVisXL」。**
+
+改图侧：`Krea2-Edit` 的 denoise 默认 **0.55**。首次用 0.65 时出过一次主体复制
+（一张图里两个穿风衣的人），但同 seed 4242 重扫 0.55 / 0.65 / 0.75 三档全是单人 ——
+**复制是随机 seed 触发的偶发问题，不是 denoise 的单值边界**。选 0.55 是因为它在
+「保住原构图」和「跟住 prompt」之间余量最大；0.45 几乎不动只剩调色，0.75 会把
+原图的结构改掉大半。
+
 ---
 
 ## 四、提示词：写实模型最容易踩的坑
@@ -231,6 +287,8 @@ photorealistic, high detail, high end photography
 | `Lykon/dreamshaper-xl-1-0` | — | 可达，未装 |
 | `SG161222/Realistic_Vision_V6.0_B1_noVAE` | — | 可达，未装 |
 | `QuantStack/FLUX.1-Krea-dev-GGUF` | 3.7–12 GB | ✅ Q2_K 已装 |
+| `Comfy-Org/Krea-2` | 4.6–13 GB | ✅ Q2_K 已装 + qwen3vl fp8 + qwen_image_vae |
+| `vantagewithai/Krea-2-Turbo-GGUF` | 4.6–13 GB | ✅ 同源 GGUF 量化，Q2_K 从这里下 |
 | epiCRealism XL / CyberRealistic XL / AbsoluteReality 1.8 | — | ❌ 404，只在 CivitAI |
 
 **CivitAI 上的那批顶级写实模型（epiCRealism、CyberRealistic、AbsoluteReality）在
@@ -246,7 +304,9 @@ hf-mirror 上都拿不到**，只能从 CivitAI 下（需要账号 + 可能过 C
 | 日常真人照片、生活感、纪实 | **RealVisXL V5**（默认） |
 | 商业人像、海报、电影感、手要稳 | Juggernaut XI v11 |
 | 二次元插画 | Illustrious-XL（保留） |
-| 要场景理解最好的一张 | FLUX Krea Q2_K（慢 3–4 倍，皮肤有伪影） |
+| 要场景理解最好的一张 | **Krea 2 Turbo Q2_K**（热态 48 s，长 prompt 不丢约束） |
+| 要 FLUX 那种质感但更快 | Krea 2 Turbo Q2_K（FLUX 82 s vs 它 48 s） |
 
 8 GB 显存的现实：SDXL 2.6B 是这张卡的甜点。FLUX 12B 能塞进 Q2_K 但不划算，
+Krea 2 的 28 层 DiT 同样只能贴 Q2_K 且文本编码器锁死 fp8（合计约 9.5 GB）。
 Qwen-Image 20B 想都别想。想要 FLUX 全精度或更好的写实底模，先换卡（16 GB 起步）。

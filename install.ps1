@@ -2,7 +2,7 @@
 #
 #   powershell -ExecutionPolicy Bypass -File .\install.ps1
 #   powershell -ExecutionPolicy Bypass -File .\install.ps1 -WithRealistic
-#   powershell -ExecutionPolicy Bypass -File .\install.ps1 -WithRealistic -WithJuggernaut -WithFlux
+#   powershell -ExecutionPolicy Bypass -File .\install.ps1 -WithRealistic -WithJuggernaut -WithFlux -WithKrea2
 #
 # Safe to re-run: every step checks its target first and skips when present,
 # so an interrupted install resumes instead of starting over.
@@ -16,7 +16,12 @@ param(
   [switch]$WithJuggernaut,
   # +9.1 GB. FLUX.1 Krea dev Q2_K + T5 + CLIP-L + VAE + ComfyUI-GGUF nodes.
   # Runs on 8 GB but is 3-4x slower and adds quantization artifacts on skin.
-  [switch]$WithFlux
+  [switch]$WithFlux,
+  # +9.8 GB. Krea 2 Turbo Q2_K + Qwen3-VL-4B fp8 text encoder + Qwen-Image VAE.
+  # 28-layer DiT; 48 s hot / ~190 s cold on 8 GB. The text encoder MUST be the
+  # fp8 safetensors - a GGUF one only emits the last hidden state and Krea 2
+  # needs 12 stacked layers (30720 features).
+  [switch]$WithKrea2
 )
 
 $ErrorActionPreference = 'Stop'
@@ -61,6 +66,19 @@ $VaeFile   = Join-Path $VaeDir 'flux_ae.safetensors'
 # black-forest-labs' own resolve URLs return 403 on hf-mirror; these mirrors work.
 $VaeUrl    = 'https://hf-mirror.com/ChuckMcSneed/FLUX.1-dev/resolve/main/ae.safetensors'
 $VaeBytes  = 335304388
+
+# Krea 2 Turbo. Not a FLUX variant - krea.ai's own 28-layer DiT. Only Q2_K is
+# usable on 8 GB: Q4_K_S + the fp8 text encoder is 12.5 GB and degrades to
+# ~640 s/step once weights spill to system RAM.
+$K2File    = Join-Path $FluxDir 'krea2_turbo-Q2_K.gguf'
+$K2Url     = 'https://hf-mirror.com/vantagewithai/Krea-2-Turbo-GGUF/resolve/main/krea2_turbo-Q2_K.gguf'
+$K2Bytes   = 4889589024
+$K2TeFile  = Join-Path $T5Dir 'qwen3vl_4b_fp8_scaled.safetensors'
+$K2TeUrl   = 'https://hf-mirror.com/Comfy-Org/Krea-2/resolve/main/text_encoders/qwen3vl_4b_fp8_scaled.safetensors'
+$K2TeBytes = 5242467968
+$K2VaeFile = Join-Path $VaeDir 'qwen_image_vae.safetensors'
+$K2VaeUrl  = 'https://hf-mirror.com/Comfy-Org/Krea-2/resolve/main/vae/qwen_image_vae.safetensors'
+$K2VaeBytes = 253806246
 # Index mirrors in preference order. aliyun's PyPI mirror intermittently
 # returns ChunkedEncodingError on small files, so it is not first.
 $PipIndexes = @(
@@ -407,6 +425,30 @@ if ($WithFlux) {
 } else {
   Step 8 'FLUX.1 Krea dev'
   Skip 'not requested - add -WithFlux (+9.1 GB, needs ComfyUI-GGUF)'
+}
+
+if ($WithKrea2) {
+  Step '8b' 'Krea 2 Turbo - Q2_K quantized (9.8 GB total)'
+  Info 'needs ComfyUI-GGUF for the DiT; the text encoder stays safetensors on purpose'
+
+  $ggufDir = Join-Path $ComfyDir 'custom_nodes\ComfyUI-GGUF'
+  if (Test-Path (Join-Path $ggufDir 'nodes.py')) {
+    Skip 'ComfyUI-GGUF nodes'
+  } else {
+    $code = Invoke-Native 'git.exe' @('clone', '--depth', '1', 'https://github.com/city96/ComfyUI-GGUF.git', "$ggufDir")
+    if ($code -ne 0) { Info 'git clone failed - download the zip from github and unzip into custom_nodes\ComfyUI-GGUF' }
+    else { Ok 'ComfyUI-GGUF nodes' }
+  }
+
+  $k2Ok = $true
+  if (-not (Get-Weight $K2Url $K2File $K2Bytes 'krea2_turbo-Q2_K.gguf')) { $k2Ok = $false }
+  if (-not (Get-Weight $K2TeUrl $K2TeFile $K2TeBytes 'qwen3vl_4b_fp8_scaled.safetensors')) { $k2Ok = $false }
+  if (-not (Get-Weight $K2VaeUrl $K2VaeFile $K2VaeBytes 'qwen_image_vae.safetensors')) { $k2Ok = $false }
+  if (-not $k2Ok) { Info 'Krea 2 weights incomplete - re-run this script to resume' }
+  else { Info 'Krea 2 needs ~48 s/image hot, ~190 s for the first one (weight load)' }
+} else {
+  Step '8b' 'Krea 2 Turbo'
+  Skip 'not requested - add -WithKrea2 (+9.8 GB, needs ComfyUI-GGUF)'
 }
 
 # ---------------------------------------------------------------- 9) verify

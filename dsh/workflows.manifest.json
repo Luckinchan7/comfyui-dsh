@@ -73,5 +73,15 @@
     "name": "Undress-Inpaint",
     "presetPrompt": "RAW photo, photorealistic, natural skin texture, sharp focus",
     "file": "workflows/Undress-Inpaint.json"
+  },
+  {
+    "name": "Krea2",
+    "presetPrompt": "RAW photo, photorealistic, natural skin texture, sharp focus, high detail",
+    "file": "workflows/Krea2.json"
+  },
+  {
+    "name": "Krea2-Edit",
+    "presetPrompt": "RAW photo, photorealistic, natural skin texture, sharp focus",
+    "file": "workflows/Krea2-Edit.json"
   }
 ]

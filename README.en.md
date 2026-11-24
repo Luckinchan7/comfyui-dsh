@@ -1,9 +1,9 @@
 # comfyui-dsh — local image generation, ComfyUI + DeepSeek Harness
 
-[![DSH target](https://img.shields.io/badge/DeepSeek%20Harness-0.2.2--rc.3-4f46e5)](docs/COMPATIBILITY.md)
-[![version](https://img.shields.io/badge/version-1.4.5-16a34a)](https://github.com/Luckinchan7/comfyui-dsh/releases/tag/v1.4.5)
-[![checkpoints](https://img.shields.io/badge/checkpoints-4-0ea5e9)](docs/MODELS.md)
-[![workflows](https://img.shields.io/badge/workflows-15-8b5cf6)](dsh/workflows)
+[![DSH target](https://img.shields.io/badge/DeepSeek%20Harness-0.2.2--rc.5-4f46e5)](docs/COMPATIBILITY.md)
+[![version](https://img.shields.io/badge/version-1.5.0-16a34a)](https://github.com/Luckinchan7/comfyui-dsh/releases/tag/v1.5.0)
+[![checkpoints](https://img.shields.io/badge/checkpoints-5-0ea5e9)](docs/MODELS.md)
+[![workflows](https://img.shields.io/badge/workflows-17-8b5cf6)](dsh/workflows)
 [![license](https://img.shields.io/badge/license-MIT-a3a3a3)](LICENSE)
 [![platform](https://img.shields.io/badge/platform-Windows%20%2F%20RTX%2050-f97316)](docs/COMPATIBILITY.md)
 
@@ -34,6 +34,7 @@ kitchen making coffee, morning backlight, unedited`), same scene:
 | Juggernaut XI v11 | 6.6 GB | 24–30 s | Commercial / cinematic, steadier hands, but over-polished |
 | Illustrious-XL v1.1 | 6.5 GB | 26–33 s | Anime illustration. Top-left is that model forced with a photo prompt |
 | FLUX.1 Krea dev Q2_K | 3.7 GB | 82 s | Best scene comprehension, 3–4× slower. Q2 quantization leaves brown spots; suppress with positive wording |
+| **Krea 2 Turbo Q2_K** | 4.6 GB | **48 s** | Long prompts keep every constraint; only 1.8× slower than SDXL when hot. ~190 s cold start |
 
 Six-scene comparison, all four FLUX quantization tiers, four prompt styles and the
 parameter sweet spots are in **[docs/MODELS.md](docs/MODELS.md)** (Chinese).
@@ -478,6 +479,7 @@ part's byte count, and the file magic number.
 | **v1.4.3 (2026-11-20)** | same (FLUX spot removal: presetPrompt rewrite, refreshed 4-way comparison image, eight-variant table in MODELS.md) | same | same |
 | **v1.4.4 (2026-11-20)** | same (the capsule is authoritative again: what you pick is what runs; a request only takes over when the capsule cannot do the call) | same | same |
 | **v1.4.5 (2026-11-25)** | same (repository moved to the new account; every link and the release script follow) | same | same |
+| **v1.5.0 (2026-11-25)** | + Krea 2 Turbo (Q2_K, 48 s hot) / Krea2-Edit (denoise 0.55); workflows 15 → 17 | same | same |
 
 Per-change details in **[CHANGELOG.md](CHANGELOG.md)**.
 

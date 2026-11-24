@@ -1,9 +1,9 @@
 # comfyui-dsh — 本地生图，ComfyUI + DeepSeek Harness
 
-[![DSH target](https://img.shields.io/badge/DeepSeek%20Harness-0.2.2--rc.3-4f46e5)](docs/COMPATIBILITY.md)
-[![version](https://img.shields.io/badge/version-1.4.5-16a34a)](https://github.com/Luckinchan7/comfyui-dsh/releases/tag/v1.4.5)
-[![checkpoints](https://img.shields.io/badge/checkpoints-4-0ea5e9)](docs/MODELS.md)
-[![workflows](https://img.shields.io/badge/workflows-15-8b5cf6)](dsh/workflows)
+[![DSH target](https://img.shields.io/badge/DeepSeek%20Harness-0.2.2--rc.5-4f46e5)](docs/COMPATIBILITY.md)
+[![version](https://img.shields.io/badge/version-1.5.0-16a34a)](https://github.com/Luckinchan7/comfyui-dsh/releases/tag/v1.5.0)
+[![checkpoints](https://img.shields.io/badge/checkpoints-5-0ea5e9)](docs/MODELS.md)
+[![workflows](https://img.shields.io/badge/workflows-17-8b5cf6)](dsh/workflows)
 [![license](https://img.shields.io/badge/license-MIT-a3a3a3)](LICENSE)
 [![platform](https://img.shields.io/badge/platform-Windows%20%2F%20RTX%2050-f97316)](docs/COMPATIBILITY.md)
 
@@ -32,7 +32,8 @@ kitchen making coffee, morning backlight, unedited`）、同一场景：
 | **RealVisXL V5.0 fp16** | 6.5 GB | **26–31 s** | 写实默认档。纪实/生活感最准 |
 | Juggernaut XI v11 | 6.6 GB | 24–30 s | 商业/电影感，手部结构更稳，但过度精致 |
 | Illustrious-XL v1.1 | 6.5 GB | 26–33 s | 二次元插画。左上那张是用写实 prompt 强扭的结果 |
-| FLUX.1 Krea dev Q2_K | 3.7 GB | 82 s | 场景理解最强，慢 3–4 倍。Q2 量化本身会留褐色斑点，靠正向措辞压掉 |
+| FLUX.1 Krea dev Q2_K | 3.7 GB | 82 s | 场景理解强，慢 3–4 倍。Q2 量化本身会留褐色斑点，靠正向措辞压掉 |
+| **Krea 2 Turbo Q2_K** | 4.6 GB | **48 s** | 长 prompt 不丢约束，热态只比 SDXL 慢 1.8 倍。冷态首图约 190 s |
 
 六场景对拍、FLUX 四档量化的实测数据、提示词四风格、参数甜点，见
 **[docs/MODELS.md](docs/MODELS.md)**。
@@ -448,6 +449,7 @@ hf-mirror 被限流时会把报错页当正文写进文件，大小完全吻合�
 | **v1.4.3（2026-11-20）** | 同上（FLUX 去斑：presetPrompt 改写 + 四底模对比图换新 + MODELS.md 补八组对照） | 同上 | 同上 |
 | **v1.4.4（2026-11-20）** | 同上（胶囊重新成为唯一权威：选什么就出什么，胶囊不胜任才让位给调用参数） | 同上 | 同上 |
 | **v1.4.5（2026-11-25）** | 同上（仓库迁到新账号，所有链接与发布脚本同步） | 同上 | 同上 |
+| **v1.5.0（2026-11-25）** | + Krea 2 Turbo（Q2_K，热态 48 s）/ Krea2-Edit（denoise 0.55），工作流 15 → 17 | 同上 | 同上 |
 
 逐条变更见 **[CHANGELOG.md](CHANGELOG.md)**。
 

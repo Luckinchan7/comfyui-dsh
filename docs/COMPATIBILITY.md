@@ -190,8 +190,8 @@ FLUX 的图结构完全不同（多 `FluxGuidance`、`EmptySD3LatentImage`，cfg
 
 | 组件 | 版本 | 说明 |
 |---|---|---|
-| DSH | 0.2.2-rc.3（本机） | 插件机制在这一版上验证 |
-| `dsh-image-gen` | 0.11.3 | ComfyUI provider 由它提供 |
+| DSH | 0.2.2-rc.5（本机） | 插件机制在这一版上验证 |
+| `dsh-image-gen` | 0.12.2 | ComfyUI provider 由它提供（升级后必须重跑 `scripts/patch-dsh-image-gen.py`） |
 | `dsh-comfy-models` | 0.1.0（本仓库） | 底模切换 |
 
 ### 一个必须知道的不兼容
@@ -247,7 +247,7 @@ Python 3.12.13
 torch 2.9.0+cu130 / torchvision 0.24.0+cu130 / CUDA 13.0
 transformers 5.23.0 / safetensors 0.8.0 / gguf 0.19.0 / sentencepiece 0.2.3 / protobuf 7.36.2
 ComfyUI 0.45.0
-DSH 0.2.2-rc.3 / dsh-image-gen 0.11.3 / dsh-comfy-models 0.1.0
+DSH 0.2.2-rc.5 / dsh-image-gen 0.12.2 / dsh-comfy-models 0.1.0
 ```
 
 启动参数：

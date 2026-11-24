@@ -37,6 +37,8 @@
      -WithRealistic    +6.5 GB，RealVisXL V5（写实默认档）
      -WithJuggernaut   +6.6 GB，Juggernaut XI（商业/电影感）
      -WithFlux         +9.1 GB，FLUX Krea Q2_K + GGUF 节点（8 GB 卡能跑但慢 3-4 倍）
+     -WithKrea2        +9.8 GB，Krea 2 Turbo Q2_K + Qwen3-VL fp8 文本编码器
+                       （8 GB 卡热态 48 s，冷态首图约 190 s；文本编码器不能换 GGUF）
 
    例：powershell -ExecutionPolicy Bypass -File .\install.ps1 -WithRealistic
 

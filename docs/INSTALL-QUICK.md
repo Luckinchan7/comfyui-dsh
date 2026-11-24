@@ -42,6 +42,7 @@ powershell -ExecutionPolicy Bypass -File .\install.ps1
 [6] SDXL checkpoint - Illustrious-XL v1.1 (6.46 GB)
 [7] photoreal SDXL checkpoints      <- 可选
 [8] FLUX.1 Krea dev                 <- 可选
+[8b] Krea 2 Turbo Q2_K              <- 可选
 [9] smoke test
 ```
 
@@ -60,9 +61,17 @@ powershell -ExecutionPolicy Bypass -File .\install.ps1 -WithRealistic -WithJugge
 
 # 再加 FLUX Krea（+9.1 GB，8 GB 卡上慢 3-4 倍，皮肤有量化伪影）
 powershell -ExecutionPolicy Bypass -File .\install.ps1 -WithRealistic -WithFlux
+
+# 再加 Krea 2 Turbo（+9.8 GB，热态 48 s，长 prompt 不丢约束）
+powershell -ExecutionPolicy Bypass -File .\install.ps1 -WithRealistic -WithKrea2
 ```
 
-第 7、8 步没请求就打印一行 skip，不会阻断后面的步骤。选哪个底模见
+第 7、8、8b 步没请求就打印一行 skip，不会阻断后面的步骤。
+
+**Krea 2 的文本编码器不能换成 GGUF。** 它要 Qwen3-VL-4B 的第 2/5/8/…/35 层共 12 层
+hidden state 堆叠成 30720 维 conditioning，`CLIPLoaderGGUF` 只吐最后一层，
+硬接会报 `Krea2 expects conditioning with 12x2560=30720 features … but got 2560`。
+所以那 4.9 GB 的 fp8 safetensors 是省不掉的。选哪个底模见
 [MODELS.md](MODELS.md)，显存够不够见 [COMPATIBILITY.md](COMPATIBILITY.md)。
 
 跑完看到这个就算成功：
