@@ -181,14 +181,27 @@ def main():
         rel_id = rel["id"]
         out(f"已建 release {tag} (id {rel_id})")
 
-    upload = rel.get("upload_url", "").split("{")[0]
-    for path, ctype in ((zip_path, "application/zip"), (sums_path, "text/plain")):
+    # 资产走 uploads.github.com，和 api.github.com 是不同域名；
+    # urllib 在这条线上会碰到 TLS EOF，改用 curl（Windows 自带）。
+    for path, ctype in ((zip_path, "application/octet-stream"),
+                        (sums_path, "application/octet-stream")):
         name = os.path.basename(path)
-        data = open(path, "rb").read()
-        code, res = api("POST", upload.replace(API, "") + f"?name={name}", token,
-                        raw=data, ctype=ctype)
-        state = res.get("state") if isinstance(res, dict) else "?"
-        out(f"  {name} ({len(data)} B) -> HTTP {code} {state}")
+        url = (f"https://uploads.github.com/repos/{full}/releases/{rel_id}"
+               f"/assets?name={name}")
+        rc, so, se = run(["curl", "-sS", "--retry", "4", "--retry-delay", "3",
+                          "-m", "600", "-X", "POST",
+                          "-H", f"Authorization: Bearer {token}",
+                          "-H", f"Content-Type: {ctype}",
+                          "-H", "User-Agent: comfyui-dsh-publish",
+                          "--data-binary", f"@{path}", url])
+        if rc != 0:
+            out(f"  {name} 上传失败：{(se or so).strip()[:300]}")
+            return 1
+        try:
+            res = json.loads(so)
+        except Exception:
+            res = {"state": so[:200]}
+        out(f"  {name} ({os.path.getsize(path)} B) -> {res.get('state')}")
 
     code, final = api("GET", f"/repos/{full}/releases/{rel_id}", token)
     if code == 200:
