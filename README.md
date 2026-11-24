@@ -375,6 +375,7 @@ scripts/
   test-dsh-image-gen-pin.py  上面那个补丁的单元测试（14 条断言，不需要 DSH 运行时）
   pack-release.ps1        git archive 打包发行版
   make-release.py         建 GitHub release 并上传 zip + SHA256SUMS
+  publish-new-account.py  换账号后一键建仓库 + 推 main/tag + 发 release
 docs/
   INSTALL-QUICK.md        逐步骤安装 + 排错
   AGENT-PROMPT.md         复制给 AI 让它自己装

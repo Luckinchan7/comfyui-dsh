@@ -397,6 +397,7 @@ scripts/
   test-dsh-image-gen-pin.py  unit tests for that patch (14 assertions, no DSH runtime needed)
   pack-release.ps1        git archive packaging
   make-release.py         create the GitHub release and upload zip + SHA256SUMS
+  publish-new-account.py  after an account move: create the repo, push main/tags, publish the release
 docs/
   INSTALL-QUICK.md        step-by-step install + troubleshooting
   AGENT-PROMPT.md         paste into an AI and let it install
