@@ -14,7 +14,7 @@
 
 ## 第一步：下载
 
-到 [Releases](https://github.com/devin667/comfyui-dsh/releases/latest) 下载：
+到 [Releases](https://github.com/Luckinchan7/comfyui-dsh/releases/latest) 下载：
 
 - `comfyui-dsh.zip`（约 60 KB，只有脚本，不含模型和 Python）
 

@@ -1,7 +1,7 @@
 # comfyui-dsh — 本地生图，ComfyUI + DeepSeek Harness
 
 [![DSH target](https://img.shields.io/badge/DeepSeek%20Harness-0.2.2--rc.3-4f46e5)](docs/COMPATIBILITY.md)
-[![version](https://img.shields.io/badge/version-1.4.4-16a34a)](https://github.com/devin667/comfyui-dsh/releases/tag/v1.4.4)
+[![version](https://img.shields.io/badge/version-1.4.4-16a34a)](https://github.com/Luckinchan7/comfyui-dsh/releases/tag/v1.4.4)
 [![checkpoints](https://img.shields.io/badge/checkpoints-4-0ea5e9)](docs/MODELS.md)
 [![workflows](https://img.shields.io/badge/workflows-15-8b5cf6)](dsh/workflows)
 [![license](https://img.shields.io/badge/license-MIT-a3a3a3)](LICENSE)
@@ -94,7 +94,7 @@ insightface 先算 512 维身份向量，只把向量送进 cross-attention，�
 # 从 Releases 下 comfyui-dsh.zip，解压到 D:\ComfyUI
 
 # 方式二：git clone
-git clone https://github.com/devin667/comfyui-dsh.git D:\ComfyUI
+git clone https://github.com/Luckinchan7/comfyui-dsh.git D:\ComfyUI
 
 cd D:\ComfyUI
 powershell -ExecutionPolicy Bypass -File .\install.ps1

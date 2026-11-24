@@ -18,7 +18,7 @@
 ## 要做的事
 
 1. 下载安装包：
-   https://github.com/devin667/comfyui-dsh/releases/latest/download/comfyui-dsh.zip
+   https://github.com/Luckinchan7/comfyui-dsh/releases/latest/download/comfyui-dsh.zip
 
    校验 sha256 应当是：
    ae3154031151cd8b5b0fdb70a0d784983b9144501cc49b63b8a87605490e9165
@@ -115,7 +115,7 @@ SDXL 的文本编码器按标签训练，长句和中文基本等于噪声。
 ## 简版（对方已经有 DSH，只想一句话装完）
 
 ````text
-装本地生图：下 https://github.com/devin667/comfyui-dsh/releases/latest/download/comfyui-dsh.zip
+装本地生图：下 https://github.com/Luckinchan7/comfyui-dsh/releases/latest/download/comfyui-dsh.zip
 解压到 D:\ComfyUI，跑 powershell -ExecutionPolicy Bypass -File .\install.ps1（后台跑，20-40 分钟，
 幂等可重跑），看到 "Install complete." 和 cuda True 就算好；然后双击 启动ComfyUI.bat，
 等 "Starting server -> http://127.0.0.1:8188"，再跑 node .\dsh\apply-workflows.mjs，

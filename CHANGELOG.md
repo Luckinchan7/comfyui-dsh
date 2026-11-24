@@ -480,17 +480,17 @@ README 从纯文字改成图文页。补上 banner、四张实测截图，中英
 | v1.1.0 | + RealVisXL V5 / Juggernaut XI / FLUX Krea | `--cache-lru 8 --reserve-vram 0.3` | 15–33 GB |
 | v1.1.1 | 同上（纯文档） | 同上 | 同上 |
 
-[未发布]: https://github.com/devin667/comfyui-dsh/compare/v1.4.4...HEAD
-[1.4.4]: https://github.com/devin667/comfyui-dsh/compare/v1.4.3...v1.4.4
-[1.4.3]: https://github.com/devin667/comfyui-dsh/compare/v1.4.2...v1.4.3
-[1.4.2]: https://github.com/devin667/comfyui-dsh/compare/v1.4.1...v1.4.2
-[1.4.1]: https://github.com/devin667/comfyui-dsh/compare/v1.4.0...v1.4.1
-[1.4.0]: https://github.com/devin667/comfyui-dsh/compare/v1.3.1...v1.4.0
-[1.3.1]: https://github.com/devin667/comfyui-dsh/compare/v1.3.0...v1.3.1
-[1.3.0]: https://github.com/devin667/comfyui-dsh/compare/v1.2.2...v1.3.0
-[1.2.2]: https://github.com/devin667/comfyui-dsh/compare/v1.2.1...v1.2.2
-[1.2.1]: https://github.com/devin667/comfyui-dsh/compare/v1.2.0...v1.2.1
-[1.2.0]: https://github.com/devin667/comfyui-dsh/compare/v1.1.1...v1.2.0
-[1.1.1]: https://github.com/devin667/comfyui-dsh/compare/v1.1.0...v1.1.1
-[1.1.0]: https://github.com/devin667/comfyui-dsh/compare/v1.0.0...v1.1.0
-[1.0.0]: https://github.com/devin667/comfyui-dsh/releases/tag/v1.0.0
+[未发布]: https://github.com/Luckinchan7/comfyui-dsh/compare/v1.4.4...HEAD
+[1.4.4]: https://github.com/Luckinchan7/comfyui-dsh/compare/v1.4.3...v1.4.4
+[1.4.3]: https://github.com/Luckinchan7/comfyui-dsh/compare/v1.4.2...v1.4.3
+[1.4.2]: https://github.com/Luckinchan7/comfyui-dsh/compare/v1.4.1...v1.4.2
+[1.4.1]: https://github.com/Luckinchan7/comfyui-dsh/compare/v1.4.0...v1.4.1
+[1.4.0]: https://github.com/Luckinchan7/comfyui-dsh/compare/v1.3.1...v1.4.0
+[1.3.1]: https://github.com/Luckinchan7/comfyui-dsh/compare/v1.3.0...v1.3.1
+[1.3.0]: https://github.com/Luckinchan7/comfyui-dsh/compare/v1.2.2...v1.3.0
+[1.2.2]: https://github.com/Luckinchan7/comfyui-dsh/compare/v1.2.1...v1.2.2
+[1.2.1]: https://github.com/Luckinchan7/comfyui-dsh/compare/v1.2.0...v1.2.1
+[1.2.0]: https://github.com/Luckinchan7/comfyui-dsh/compare/v1.1.1...v1.2.0
+[1.1.1]: https://github.com/Luckinchan7/comfyui-dsh/compare/v1.1.0...v1.1.1
+[1.1.0]: https://github.com/Luckinchan7/comfyui-dsh/compare/v1.0.0...v1.1.0
+[1.0.0]: https://github.com/Luckinchan7/comfyui-dsh/releases/tag/v1.0.0

@@ -15,7 +15,7 @@ import urllib.request
 
 import argparse
 
-REPO = "devin667/comfyui-dsh"
+REPO = "Luckinchan7/comfyui-dsh"
 DIST = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "dist")
 
 _ap = argparse.ArgumentParser(description="Create a GitHub release and upload its assets.")
